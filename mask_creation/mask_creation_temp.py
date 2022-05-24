@@ -14,52 +14,6 @@ import gdstk
 
 #%%
 
-def create_annulus(x, y,
-                   inner, outer,
-                   layer_data, tolerance):
-    
-    return gdstk.ellipse(np.array([x, y]), 
-                         outer, 
-                         inner_radius=inner, 
-                         initial_angle=0,
-                         final_angle=2*np.pi,
-                         layer=layer_data['layer'],
-                         datatype=layer_data['datatype'],
-                         tolerance=tolerance
-                         )
-
-def create_half_annulus(x, y,
-                        inner, outer,
-                        initial_angle, final_angle,
-                        layer_data, tolerance):
-    
-    return gdstk.ellipse(np.array([x, y]), 
-                         outer, 
-                         inner_radius=inner, 
-                         initial_angle=initial_angle,
-                         final_angle=final_angle,
-                         layer=layer_data['layer'],
-                         datatype=layer_data['datatype'],
-                         tolerance=tolerance
-                         )
-
-def create_circle(x, y, radius, layer_data, tolerance):
-    
-    return gdstk.ellipse(np.array([x, y]), 
-                        radius, 
-                        layer=layer_data['layer'],
-                        datatype=layer_data['datatype'],
-                        tolerance=tolerance
-                        )
-
-def create_rectangle(x, y, x_size, y_size, layer_data):
-    return gdstk.Polygon([(x + x_size/2, y + y_size/2),
-                          (x + x_size/2, y - y_size/2),
-                          (x - x_size/2, y - y_size/2),
-                          (x - x_size/2, y + y_size/2)],
-                           layer=layer_data['layer'],
-                           datatype=layer_data['datatype'])
-
 def create_mask_label(x, y, text, layer_data):
     height = 60
     
@@ -75,50 +29,6 @@ def create_mesa_label(x, y, text, layer_data):
                        (x, y),
                        layer=layer_data['layer'],
                        datatype=layer_data['datatype'])
-
-def create_alignment_mark(x, y,
-                          thickness, length,
-                          x_offset_rectangles, y_offset_rectangles,
-                          rectangle_width, rectangle_height,
-                          first_y_offset, repeating_y_offset, marks_y_direction,
-                          with_rectangle,
-                          layer_data):
-    alignment_polygons = []
-    alignment_polygons.append(gdstk.Polygon([(x + thickness/2,      y + thickness/2),
-                                             (x + thickness/2 + length, y + thickness/2),
-                                             (x + thickness/2 + length, y - thickness/2),
-                                             (x + thickness/2,          y - thickness/2),
-                                             (x + thickness/2,          y - thickness/2 - length),
-                                             (x - thickness/2,          y - thickness/2 - length),
-                                             (x - thickness/2,          y - thickness/2),
-                                             (x - thickness/2 - length, y - thickness/2),
-                                             (x - thickness/2 - length, y + thickness/2),
-                                             (x - thickness/2,          y + thickness/2),
-                                             (x - thickness/2,          y + thickness/2 + length),
-                                             (x + thickness/2,          y + thickness/2 + length)],
-                                            layer=layer_data['layer'],
-                                            datatype=layer_data['datatype']))
-    
-    if with_rectangle:
-        for i in range(marks_y_direction):
-            alignment_polygons.append(create_rectangle(x - x_offset_rectangles, y + first_y_offset + i*repeating_y_offset, 
-                                                       rectangle_width, rectangle_height, 
-                                                       layer_data))
-            alignment_polygons.append(create_rectangle(x - x_offset_rectangles, y - first_y_offset - i*repeating_y_offset, 
-                                                       rectangle_width, rectangle_height, 
-                                                       layer_data))
-            
-        for i in range(marks_y_direction):
-            alignment_polygons.append(create_rectangle(x + first_y_offset + i*repeating_y_offset, y + y_offset_rectangles, 
-                                                       rectangle_height, rectangle_width, 
-                                                       layer_data))
-            alignment_polygons.append(create_rectangle(x - first_y_offset - i*repeating_y_offset, y + y_offset_rectangles, 
-                                                       rectangle_height, rectangle_width, 
-                                                       layer_data))
-    
-    
-    
-    return alignment_polygons
 
 def create_one_a_mark(x, y,
                       thickness, length,

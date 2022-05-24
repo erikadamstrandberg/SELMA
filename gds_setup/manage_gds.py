@@ -23,12 +23,8 @@ def setup_gds_lib(mask_name, cell_name, layer_data):
         
     full_mask = {}
     
-    full_mask['erik'] = 'erik'
-    # 
-    # for layer in layer_data.keys():
-    #     full_mask[layer] = []
-    #     # full_mask[layer].append(lib.new_cell(layer))
-        
+    for layer in layer_data.keys():
+        full_mask[layer] = [lib.new_cell(layer)]
         
     return (mask, full_mask, layer_data_reversed, lib, circle_tolerance)
     
@@ -37,15 +33,18 @@ def save_gds_file(full_mask, mask_folder, mask, mask_name, lib, save_layout):
     
     ### Add cell to main layer
     for layer in full_mask.keys():
-        if type(full_mask[layer]) == gdstk.Polygon:
-            print('hej')
+        # print(full_mask[layer])
+        for cells in full_mask[layer]:
+            if type(cells) == gdstk.Polygon:
+            # print(polygon)
             # print(type(full_mask[layer]) == gdstk.Polygon)
             # cell_layer = gdstk.Reference(full_mask[layer])
-            # mask.add(cell_layer)
+            # print(gdstk.Reference(full_mask[layer]))
+                mask.add(cells)
         
     # Save the library in a file called 'first.gds'.
-    # if save_layout:
-    #     lib.write_gds(created_mask_folder + mask_name + '.gds')
+    if save_layout:
+        lib.write_gds(created_mask_folder + mask_name + '.gds')
         
 def create_folder_for_mask(mask_folder):
     created_mask_folder =  str(mask_folder) + '\\mask\\'
