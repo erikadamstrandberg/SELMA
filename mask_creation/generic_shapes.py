@@ -44,7 +44,7 @@ def create_circle(key, x, y, radius, layer_data, full_mask, tolerance):
                         tolerance=tolerance
                         ))
 
-def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask):
+def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask, rotation=0):
     
     right_x = x + x_size/2
     left_x  = x - x_size/2
@@ -53,10 +53,10 @@ def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask):
     lower_y = y - y_size/2
     
     full_mask[key].append(gdstk.Polygon([(right_x, upper_y),
-                               (right_x, lower_y),
-                               (left_x,  lower_y),
-                               (left_x,  upper_y)],
+                                (right_x, lower_y),
+                                (left_x,  lower_y),
+                                (left_x,  upper_y)],
                               layer=layer_data[key]['layer_number'],
-                              datatype=layer_data[key]['datatype']))
+                              datatype=layer_data[key]['datatype']).rotate(rotation))
     
     
