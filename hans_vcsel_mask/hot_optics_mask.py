@@ -76,6 +76,13 @@ def main():
                              layer_data, full_mask)
     
     
+    left_circles_x = 1875
+    left_circles_y = 50
+    TLM_circles = create_TLM_p_circles(-left_circles_x, left_circles_y, layer_data, circle_tolerance)
+    
+    # mask.add(*TLM_circles)    
+    add_list_to_layer(TLM_circles, full_mask, layer_data_reversed)
+    
     
     # Save .gds-file
     save_layout = True

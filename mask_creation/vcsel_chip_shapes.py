@@ -1,7 +1,7 @@
 #%%
 
 import gdstk
-from generic_shapes import create_rectangle
+from generic_shapes import create_rectangle, create_annulus
 import numpy as np
 
 def create_generic_a_mark(key, 
@@ -157,6 +157,79 @@ def create_orientation_arrow(key, x, y,
                           (x - arrow_head/2, y - arrow_base)],
                            layer=layer_data[key]['layer_number'],
                            datatype=layer_data[key]['datatype']))
+    
+def create_TLM_p_circles(x, y, layer_data, circle_tolerance):
+    TLM_circle_layers = []
+    
+    TLM_circles_x_size = 1100
+    TLM_circles_y_size = 200
+    TLM_circles = create_rectangle(x, y, TLM_circles_x_size, TLM_circles_y_size, layer_data['p_ring'])
+    
+    x_offset = -400
+    middle_circle_x = x + x_offset
+    x_offset = np.array([0, 200, 200, 200, 200])
+    
+    
+    inner_annulus = 50
+    outer_annulus = np.array([75, 70, 65, 60, 55])
+
+    
+    for i, x_offset in enumerate(x_offset):
+        middle_circle_x = middle_circle_x + x_offset
+    
+        middle_annulus = create_annulus(middle_circle_x, y, 
+                                        inner_annulus, outer_annulus[i], 
+                                        layer_data['p_ring'], circle_tolerance)
+        
+        TLM_circles = gdstk.boolean(TLM_circles, middle_annulus, 'not', 
+                                    layer=layer_data['p_ring']['layer'],
+                                    datatype=layer_data['p_ring']['datatype'])
+    
+    TLM_circle_layers = TLM_circle_layers + TLM_circles
+    
+    
+    cover_margin_x = 10
+    cover_margin_y = 10
+    
+    cover_size_x = TLM_circles_x_size + cover_margin_x
+    cover_size_y = TLM_circles_y_size + cover_margin_y
+    mesa_cover = create_rectangle(x, y, cover_size_x, cover_size_y, layer_data['mesa'])
+    TLM_circle_layers.append(mesa_cover)
+    
+    open_etch = create_rectangle(x, y, cover_size_x, cover_size_y, layer_data['open_contacts'])
+    TLM_circle_layers.append(open_etch)
+    
+    
+    contact_margin = 10
+    TLM_contact_x_size = TLM_circles_x_size - contact_margin
+    TLM_contact_y_size = TLM_circles_y_size - contact_margin
+    
+    TLM_contact = create_rectangle(x, y, TLM_contact_x_size, TLM_contact_y_size, layer_data['contact_pads'])
+    
+    contact_annulus_margin = 5
+    contact_inner_annulus = inner_annulus - contact_annulus_margin
+    contact_outer_annulus = outer_annulus + contact_annulus_margin
+    
+    ## NEED TO RESET VARIABLE THIS IS STUPID
+    x_offset = -400
+    middle_circle_x = x + x_offset
+    x_offset = np.array([0, 200, 200, 200, 200])
+    
+    for i, x_offset in enumerate(x_offset):
+        middle_circle_x = middle_circle_x + x_offset
+    
+        middle_annulus = create_annulus(middle_circle_x, y, 
+                                        contact_inner_annulus, contact_outer_annulus[i], 
+                                        layer_data['contact_pads'], circle_tolerance)
+        
+        TLM_contact = gdstk.boolean(TLM_contact, middle_annulus, 'not', 
+                                    layer=layer_data['contact_pads']['layer'],
+                                    datatype=layer_data['contact_pads']['datatype'])
+    
+    
+    TLM_circle_layers = TLM_circle_layers + TLM_contact
+    
+    return TLM_circle_layers
     
     
     
