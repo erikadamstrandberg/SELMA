@@ -35,3 +35,4 @@ def create_layer_data(layer_definition_sheet, mask_folder):
                           labels[i])
     
     return layer_data
+

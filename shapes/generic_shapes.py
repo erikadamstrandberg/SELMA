@@ -6,8 +6,9 @@ import numpy as np
 
 def create_annulus(key, x, y,
                    inner, outer,
-                   layer_data, full_mask, 
-                   tolerance, add_to_mask=True):
+                   layer_data, 
+                   tolerance):
+    
     polygon = gdstk.ellipse(np.array([x, y]), 
                          outer, 
                          inner_radius=inner, 
@@ -18,16 +19,13 @@ def create_annulus(key, x, y,
                          tolerance=tolerance
                          )
     
-    if add_to_mask:
-        full_mask[key].append(polygon)
-    else:
-        return polygon
+    return polygon
 
 def create_half_annulus(key, x, y,
                         inner, outer,
                         initial_angle, final_angle,
-                        layer_data, full_mask, 
-                        tolerance, add_to_mask=True):
+                        layer_data, 
+                        tolerance):
     
     polygon = gdstk.ellipse(np.array([x, y]), 
                          outer, 
@@ -39,25 +37,19 @@ def create_half_annulus(key, x, y,
                          tolerance=tolerance
                          )
     
-    if add_to_mask:
-        full_mask[key].append(polygon)
-    else:
-        return polygon
+    return polygon
 
-def create_circle(key, x, y, radius, layer_data, full_mask, tolerance, add_to_mask=True):
+def create_circle(key, x, y, radius, layer_data, tolerance):
     
     polygon = gdstk.ellipse(np.array([x, y]), 
-                        radius, 
-                        layer=layer_data[key]['layer_number'],
-                        datatype=layer_data[key]['datatype'],
-                        tolerance=tolerance)
+                            radius, 
+                            layer=layer_data[key]['layer_number'],
+                            datatype=layer_data[key]['datatype'],
+                            tolerance=tolerance)
     
-    if add_to_mask:
-        full_mask[key].append(polygon)
-    else:
-        return polygon
+    return polygon
 
-def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask, rotation=0):
+def create_rectangle(key, x, y, x_size, y_size, layer_data, rotation=0):
     
     right_x = x + x_size/2
     left_x  = x - x_size/2
