@@ -2858,6 +2858,10 @@ def main():
     #mask.add(*TLM_circles)
     add_list_to_layer(TLM_circles, full_mask, layer_data_reversed)
     
+    
+    
+    ######################################################
+    
     # CIRCLES FOR N CONTACTS
     TLM_circles = create_TLM_n_circles(left_circles_x, left_circles_y, layer_data, circle_tolerance)
     

@@ -141,13 +141,13 @@ def create_a_marks_all_layers(frame_size_x, frame_size_y, colums_of_alignment_ma
                                        frame_size_x, frame_size_y, 
                                        colums_of_alignment_marks, 
                                        layer_data, full_mask)
+            
+            
     
 def create_orientation_arrow(key, x, y,
                              arrow_head, arrow_base,
                              layer_data, full_mask):
     
-    
-    print(layer_data[key])
     full_mask[key].append(gdstk.Polygon([(x - arrow_head/2, y),
                           (x - arrow_head, y),
                           (x,                y + arrow_head),
@@ -158,12 +158,12 @@ def create_orientation_arrow(key, x, y,
                            layer=layer_data[key]['layer_number'],
                            datatype=layer_data[key]['datatype']))
     
-def create_TLM_p_circles(x, y, layer_data, circle_tolerance):
+def create_TLM_circles(ring_layer, x, y, layer_data, full_mask, circle_tolerance):
     TLM_circle_layers = []
     
     TLM_circles_x_size = 1100
     TLM_circles_y_size = 200
-    TLM_circles = create_rectangle(x, y, TLM_circles_x_size, TLM_circles_y_size, layer_data['p_ring'])
+    TLM_circles = create_rectangle(ring_layer, x, y, TLM_circles_x_size, TLM_circles_y_size, layer_data, full_mask, add_to_mask=False)
     
     x_offset = -400
     middle_circle_x = x + x_offset
@@ -177,15 +177,16 @@ def create_TLM_p_circles(x, y, layer_data, circle_tolerance):
     for i, x_offset in enumerate(x_offset):
         middle_circle_x = middle_circle_x + x_offset
     
-        middle_annulus = create_annulus(middle_circle_x, y, 
+        middle_annulus = create_annulus(ring_layer, middle_circle_x, y, 
                                         inner_annulus, outer_annulus[i], 
-                                        layer_data['p_ring'], circle_tolerance)
+                                        layer_data, full_mask, circle_tolerance, add_to_mask=False)
         
         TLM_circles = gdstk.boolean(TLM_circles, middle_annulus, 'not', 
-                                    layer=layer_data['p_ring']['layer'],
-                                    datatype=layer_data['p_ring']['datatype'])
+                                    layer=layer_data[ring_layer]['layer_number'],
+                                    datatype=layer_data[ring_layer]['datatype'])
     
-    TLM_circle_layers = TLM_circle_layers + TLM_circles
+    for polygons in TLM_circles:
+        full_mask[ring_layer].append(polygons)
     
     
     cover_margin_x = 10
@@ -193,18 +194,15 @@ def create_TLM_p_circles(x, y, layer_data, circle_tolerance):
     
     cover_size_x = TLM_circles_x_size + cover_margin_x
     cover_size_y = TLM_circles_y_size + cover_margin_y
-    mesa_cover = create_rectangle(x, y, cover_size_x, cover_size_y, layer_data['mesa'])
-    TLM_circle_layers.append(mesa_cover)
+    create_rectangle('mesa', x, y, cover_size_x, cover_size_y, layer_data, full_mask)
     
-    open_etch = create_rectangle(x, y, cover_size_x, cover_size_y, layer_data['open_contacts'])
-    TLM_circle_layers.append(open_etch)
-    
+    create_rectangle('open_contacts', x, y, cover_size_x, cover_size_y, layer_data, full_mask)
     
     contact_margin = 10
     TLM_contact_x_size = TLM_circles_x_size - contact_margin
     TLM_contact_y_size = TLM_circles_y_size - contact_margin
     
-    TLM_contact = create_rectangle(x, y, TLM_contact_x_size, TLM_contact_y_size, layer_data['contact_pads'])
+    TLM_contact = create_rectangle('contact_pads', x, y, TLM_contact_x_size, TLM_contact_y_size, layer_data, full_mask, add_to_mask=False)
     
     contact_annulus_margin = 5
     contact_inner_annulus = inner_annulus - contact_annulus_margin
@@ -218,18 +216,76 @@ def create_TLM_p_circles(x, y, layer_data, circle_tolerance):
     for i, x_offset in enumerate(x_offset):
         middle_circle_x = middle_circle_x + x_offset
     
-        middle_annulus = create_annulus(middle_circle_x, y, 
+        middle_annulus = create_annulus('contact_pads', middle_circle_x, y, 
                                         contact_inner_annulus, contact_outer_annulus[i], 
-                                        layer_data['contact_pads'], circle_tolerance)
+                                        layer_data, full_mask, circle_tolerance, add_to_mask=False)
         
         TLM_contact = gdstk.boolean(TLM_contact, middle_annulus, 'not', 
-                                    layer=layer_data['contact_pads']['layer'],
+                                    layer=layer_data['contact_pads']['layer_number'],
                                     datatype=layer_data['contact_pads']['datatype'])
     
     
-    TLM_circle_layers = TLM_circle_layers + TLM_contact
+    for polygons in TLM_circles:
+        full_mask['contact_pads'].append(polygons)
+        
+def TLM_pads(pad_layer, x, y, layer_data, full_mask):
+    TLM_pads = []
     
-    return TLM_circle_layers
+    pad_width = 80
+    pad_height = 100
+    
+    x_first_offset  = -75
+    x_second_offset = -160
+    x_third_offset  = -245
+    x_fourth_offset = -335
+    x_fifth_offset  = -430
+    
+    x_positions = [x,
+                   x + x_first_offset,
+                   x + x_second_offset,
+                   x + x_third_offset,
+                   x + x_fourth_offset,
+                   x + x_fifth_offset]
+    for x_pads in x_positions:
+        create_rectangle(pad_layer, x_pads, y, pad_width, pad_height, layer_data, full_mask)
+        
+    
+    cover_margin_x = 10
+    cover_margin_y = 10
+    
+    cover_size_x = -x_fifth_offset + pad_width + cover_margin_x
+    cover_size_y = pad_height + cover_margin_y
+    create_rectangle('mesa', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data, full_mask)
+    
+    create_rectangle('open_contacts', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data, full_mask)
+    
+    
+    contact_margin = 10
+    contact_width = pad_width - contact_margin
+    contact_height = pad_height - contact_margin
+    for x_pads in x_positions:
+    
+        create_rectangle('contact_pads', x_pads, y, contact_width, contact_height, layer_data, full_mask)
+        
+def create_mask_label(key, x, y, text, layer_data, full_mask):
+    height = 60
+    
+    polygons = gdstk.text(text, height,
+                          (x, y),
+                          layer=layer_data[key]['layer_number'],
+                          datatype=layer_data[key]['datatype'])
+    
+    for polygon in polygons:
+        full_mask[key].append(polygon)
+        
+def create_all_labels(x, y, layer_data, full_mask):
+    
+    label_distance_y = 60
+    for i, key in enumerate(full_mask.keys()):
+        y_pos = y - i*label_distance_y
+        create_mask_label(key, x, y_pos, layer_data[key]['label'], layer_data, full_mask)
+    
+
     
     
     
