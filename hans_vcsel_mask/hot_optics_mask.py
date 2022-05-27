@@ -120,10 +120,23 @@ def main():
     cell_name   = 'HOT_OPTICS_VCSEL'
     
     # Setup GDS library and create all needed variables!
-    (mask, full_mask, layer_data_reversed, lib, circle_tolerance) = setup_gds_lib(mask_name, cell_name, layer_data)
+    chip_mask = setup_gds_lib(mask_name, cell_name, layer_data)
+    
+    # create_rectangle('DD_frame', chip_center_x, chip_center_y, frame_size_x, frame_size_y, layer_data, full_mask)
+    
+    chip_center_x = 0
+    chip_center_y = 0
+    
+    chip_size_x = 8000
+    chip_size_y = 10000
+    
+    
+
+    # Create chip'
+    create_rectangle('chip', chip_center_x, chip_center_y, chip_size_x, chip_size_y, layer_data, full_mask)
 
     # Adds frames, alignment marks, orintation arrow, TLM structures and labels
-    create_chip_necessities(circle_tolerance, layer_data, full_mask)
+  ##  create_chip_necessities(circle_tolerance, layer_data, full_mask)
     
     # Create VCSELs
     
@@ -131,7 +144,7 @@ def main():
 
     # Save .gds-file
     save_layout = True
-    save_gds_file(full_mask, mask_folder, mask, mask_name, lib, save_layout)
+    save_gds_file(chip_mask, mask_name, mask_folder, save_layout)
 
 
 

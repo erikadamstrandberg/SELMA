@@ -57,7 +57,7 @@ def create_circle(key, x, y, radius, layer_data, full_mask, tolerance, add_to_ma
     else:
         return polygon
 
-def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask, rotation=0, add_to_mask=True):
+def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask, rotation=0):
     
     right_x = x + x_size/2
     left_x  = x - x_size/2
@@ -72,10 +72,7 @@ def create_rectangle(key, x, y, x_size, y_size, layer_data, full_mask, rotation=
                             layer=layer_data[key]['layer_number'],
                             datatype=layer_data[key]['datatype']).rotate(rotation)
     
-    if add_to_mask:
-        full_mask[key].append(polygon)
-    else:
-        return polygon
+    return polygon
             
     
     
