@@ -628,14 +628,4 @@ def create_all_labels(x, y, label_distance_y, layer_data):
             label_polygons.append(create_mask_label(key, x, y_pos, text, layer_data))
     
     return label_polygons
-    
 
-    
-    
-    
-
-
-        
-        
-        
-    
