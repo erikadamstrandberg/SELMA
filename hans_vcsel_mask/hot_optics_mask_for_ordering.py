@@ -1,6 +1,8 @@
 #%%
 import os 
 
+import numpy as np
+
 from pathlib import Path
 mask_folder    = Path(__file__).parents[0]
 project_folder = Path(__file__).parents[1]
@@ -16,7 +18,7 @@ if gdstk_setup_folder not in sys.path:
     
 from generic_shapes import create_rectangle
 from initialize_layer_data import create_layer_data
-from manage_gdstk import setup_gds_lib, save_gds_file, create_folder_for_mask
+from manage_gdstk import setup_gds_lib, save_gds_file, create_folder_for_mask, save_ordering_mask
 
 import gdstk
 
@@ -108,6 +110,8 @@ def create_chip_necessities(chip_mask):
         
 def main():
     
+    save_mask_for_ordering = True
+    
     # Sheet with layer definitions
     layer_definition_sheet = 'layer_definition.xlsx'
     # Create layer data and folder to 
@@ -136,60 +140,58 @@ def main():
     
     #### Example for creation of elements ####
     #### PLEASE REMOVE ####
-    x = 0
-    y = 0
-    x_size = 100
-    y_size = 200
-    chip_mask.create_rectangle('p_ring', x, y, x_size, y_size)
+    # x = 0
+    # y = 0
+    # x_size = 100
+    # y_size = 200
+    # chip_mask.create_rectangle('p_ring', x, y, x_size, y_size)
     
     
-    #### Using booleans ####
-    x = 0
-    y = -400
-    square = create_rectangle('p_ring', x, y, x_size, y_size, layer_data)
-    cutout = create_rectangle('p_ring', x, y, x_size/2, y_size/2, layer_data)
+    # #### Using booleans ####
+    # x = 0
+    # y = -400
+    # square = create_rectangle('p_ring', x, y, x_size, y_size, layer_data)
+    # cutout = create_rectangle('p_ring', x, y, x_size/2, y_size/2, layer_data)
 
-    square_with_hole = gdstk.boolean(square, cutout, 'not')
+    # square_with_hole = gdstk.boolean(square, cutout, 'not')
     
-    #### Add a list to chip mask ####
-    chip_mask.add_polygon_list('p_ring', square_with_hole)
+    # #### Add a list to chip mask ####
+    # chip_mask.add_polygon_list('p_ring', square_with_hole)
         
     
         
-    #### Create circle ####
-    x = 400
-    y = 0
-    radius = 300
-    chip_mask.create_circle('mesa', x, y, radius)
+    # #### Create circle ####
+    # x = 400
+    # y = 0
+    # radius = 300
+    # chip_mask.create_circle('mesa', x, y, radius)
     
-    #### Create annulus ####
-    x = -400
-    y = 0
-    inner_radius = 300
-    outer_radius = 100
-    chip_mask.create_annulus('n_ring', x, y, inner_radius, outer_radius)
-    
-    
-    #### Crete text ####
-    x = 0
-    y = 500
-    size = 500
-    chip_mask.create_label('contact_pads', x, y, size, 'Hans')
+    # #### Create annulus ####
+    # x = -400
+    # y = 0
+    # inner_radius = 300
+    # outer_radius = 100
+    # chip_mask.create_annulus('n_ring', x, y, inner_radius, outer_radius)
     
     
-    
-    
-    
-    
-    
-    
+    # #### Crete text ####
+    # x = 0
+    # y = 500
+    # size = 500
+    # chip_mask.create_label('contact_pads', x, y, size, 'Hans')
     
     # Save .gds-file
-    save_layout = True
+    save_layout = False
     save_gds_file(chip_mask, mask_name, mask_folder, save_layout)
-
-
-
+    
+    mask_spacing_x             = 8000
+    mask_spacing_y             = -10000
+    number_of_mask_columns     = 5
+        
+    if save_mask_for_ordering:
+        save_ordering_mask(chip_mask, mask_name, cell_name, mask_folder, 
+                           layer_data, 
+                           mask_spacing_x, mask_spacing_y, number_of_mask_columns)
 
 if  __name__ == '__main__':
     main()

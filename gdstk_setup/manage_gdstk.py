@@ -3,6 +3,7 @@
 import gdstk
 import os
 import sys
+import numpy as np
 from pathlib import Path
 
 project_folder = Path(__file__).parents[1]
@@ -163,7 +164,38 @@ def setup_gds_lib(mask_name, cell_name, layer_data):
     return chip_mask(mask_dict, mask_cell, layer_data, layer_data_reversed, gds_lib,  circle_tolerance)
     
 
+def save_ordering_mask(chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns):
+    save_ordering_mask_parity('DD', chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns)
+    save_ordering_mask_parity('DC', chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns)
 
+
+def save_ordering_mask_parity(parity, chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns):
+    # Mask names
+    mask_name_DD   = mask_name + '_' + parity
+    # Name of top cell
+    cell_name_DD   = cell_name + '_' + parity
+    
+    # Setup GDS library and create all needed variables!
+    chip_mask_DD = setup_gds_lib(mask_name_DD, cell_name_DD, layer_data)
+    
+    for key in layer_data:
+        order_position = layer_data[key]['order_position']
+        data_parity = layer_data[key]['data_parity']
+        
+        if data_parity == parity:
+            if isinstance(order_position, np.ndarray):
+                for position in order_position:
+                    order_x = ((position - 1)%number_of_mask_columns)*mask_spacing_x
+                    order_y = ((position - 1)//number_of_mask_columns)*mask_spacing_y
+        
+                    for polygon_and_cells in chip_mask.mask_dict[key]:
+                        if isinstance(polygon_and_cells, gdstk.Polygon):
+                            polygon_and_cells_copy = polygon_and_cells.copy()
+                            polygon_and_cells_copy.translate(order_x, order_y)
+                            chip_mask_DD.add_polygon(list(chip_mask.layer_data.keys())[0], polygon_and_cells_copy)
+    save_layout = True
+    save_gds_file(chip_mask_DD, mask_name_DD, mask_folder, save_layout)
+    
 
 def save_gds_file(chip_mask, mask_name, mask_folder, save_layout):
     created_mask_folder =  str(mask_folder) + '\\mask\\'
@@ -172,6 +204,7 @@ def save_gds_file(chip_mask, mask_name, mask_folder, save_layout):
     for layer in chip_mask.mask_dict.keys():
         for cells in chip_mask.mask_dict[layer]:
             if type(cells) == gdstk.Polygon:
+                cells.layer = chip_mask.layer_data[layer]['layer_number']
                 chip_mask.mask_cell.add(cells)
                 
                 ######  Make work for smaller output! ######
