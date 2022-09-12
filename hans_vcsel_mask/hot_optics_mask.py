@@ -15,7 +15,7 @@ if shapes_folder not in sys.path:
 if gdstk_setup_folder not in sys.path:
     sys.path.append(gdstk_setup_folder)
     
-from generic_shapes import create_rectangle, create_circle, create_half_annulus, create_rotated_rectangle, create_polygon
+from generic_shapes import create_rectangle, create_circle, create_half_annulus, create_rotated_rectangle
 from initialize_layer_data import create_layer_data
 from manage_gdstk import setup_gds_lib, save_gds_file, create_folder_for_mask
 

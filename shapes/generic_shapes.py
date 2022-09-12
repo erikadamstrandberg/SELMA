@@ -67,7 +67,7 @@ def create_rectangle(key, x, y, x_size, y_size, layer_data, rotation=0):
     
     return polygon
 
-def create_polygon1(key, x1, y1, x2, y2, x3, y3, x4, y4, layer_data, rotation=0):
+def create_polygon(key, x1, y1, x2, y2, x3, y3, x4, y4, layer_data, rotation=0):
       
     polygon = gdstk.Polygon([(x1, y1),
                              (x2, y2),

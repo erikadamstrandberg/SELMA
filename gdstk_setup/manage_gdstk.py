@@ -11,7 +11,7 @@ shapes_folder = str(Path(project_folder,'shapes'))
 if shapes_folder not in sys.path:
     sys.path.append(shapes_folder)
     
-from generic_shapes import create_rectangle, create_circle, create_annulus, create_half_annulus
+from generic_shapes import create_polygon, create_rectangle, create_circle, create_annulus, create_half_annulus
 from vcsel_chip_shapes import create_a_marks_all_layers, create_initial_a_marks_all_layers, create_orientation_arrow, create_TLM_circles, create_TLM_pads, create_label, create_all_labels
 
 
@@ -29,6 +29,15 @@ class chip_mask:
         
         
     ##### Generic shapes #####
+    def create_polygon(self, key, x1, y1, x2, y2, x3, y3, x4, y4, layer_data, rotation=0):
+        self.mask_dict[key].append(create_polygon(key,
+                                                  x1, y1,
+                                                  x2, y2,
+                                                  x3, y3,
+                                                  x4, y4,
+                                                  self.layer_data, rotation=0))
+        
+        
     def create_rectangle(self, key, x, y, x_size, y_size, rotation=0):
         self.mask_dict[key].append(create_rectangle(key, x, y, 
                                                     x_size, y_size, 
