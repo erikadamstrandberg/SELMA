@@ -107,9 +107,7 @@ def create_chip_necessities(chip_mask):
     
     return (chip_size_x, chip_size_y, frame_size_x, frame_size_y)
 
-def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
-    
-    
+def VCSEL_no_trenches(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
     
     ## FIRST LAYER: P RING
     p_ring_x = x_offset
@@ -185,6 +183,8 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
                               layer=layer_data['n_ring']['layer_number'],
                               datatype=layer_data['n_ring']['datatype'])
     n_contact = n_contact[0]
+    n_contact.fillet(10000, tolerance=0.001)
+
     
     chip_mask.add_polygon('n_ring', n_contact)
 
@@ -231,6 +231,7 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
                            datatype=layer_data['open_contacts']['datatype'])
     
     open_n_arch = open_n_arch[0]
+    open_n_arch.fillet(10000, tolerance=0.001)
     chip_mask.add_polygon('open_contacts', open_n_arch)
     
     ## CREATE CIRCLE FOR P CONTACT
@@ -246,28 +247,11 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
     contact_pad_y_offset = -100 + y_offset
     
     probe_pitch = 100
+    contact_pad_radius = 35
     
-    # contact_pad_left = gdstk.Polygon([(-contact_pad_side/2 + contact_pad_x_offset, -contact_pad_side/2 + contact_pad_y_offset),
-    #                                   ( contact_pad_side/2 + contact_pad_x_offset, -contact_pad_side/2 + contact_pad_y_offset),
-    #                                   ( contact_pad_side/2 + contact_pad_x_offset,  contact_pad_side/2 + contact_pad_y_offset),
-    #                                   (-contact_pad_side/2 + contact_pad_x_offset,  contact_pad_side/2 + contact_pad_y_offset)],
-    #                                     layer=layer_data['contact_pads']['layer_number'], datatype=layer_data['contact_pads']['datatype'])
-      
-    # chip_mask.add_polygon('contact_pads', contact_pad_left)
-    
-    # chip_mask.create_circle('contact_pads', contact_pad_x_offset, contact_pad_y_offset, 35)
-    left_contact_pad = create_circle('contact_pads', contact_pad_x_offset, contact_pad_y_offset, 35, layer_data, chip_mask.circle_tolerance)
-    
-    
-    # contact_pad_right = gdstk.Polygon([(-contact_pad_side/2 + contact_pad_x_offset + probe_length, -contact_pad_side/2 + contact_pad_y_offset),
-    #                                     ( contact_pad_side/2 + contact_pad_x_offset + probe_length, -contact_pad_side/2 + contact_pad_y_offset),
-    #                                     ( contact_pad_side/2 + contact_pad_x_offset + probe_length,  contact_pad_side/2 + contact_pad_y_offset),
-    #                                     (-contact_pad_side/2 + contact_pad_x_offset + probe_length,  contact_pad_side/2 + contact_pad_y_offset)],
-    #                                     layer=layer_data['contact_pads']['layer_number'], datatype=layer_data['contact_pads']['datatype'])
-    
-    # chip_mask.add_polygon('contact_pads', contact_pad_right)
-    chip_mask.create_circle('contact_pads', contact_pad_x_offset + probe_pitch, contact_pad_y_offset, 35)
-    
+    left_contact_pad = create_circle('contact_pads', contact_pad_x_offset, contact_pad_y_offset, contact_pad_radius, layer_data, chip_mask.circle_tolerance)
+    right_contact_pad = create_circle('contact_pads', contact_pad_x_offset + probe_pitch, contact_pad_y_offset, contact_pad_radius, layer_data, chip_mask.circle_tolerance)
+
     contact_pad_arch_inner  = n_contact_inner
     contact_pad_arch_outer  = n_contact_outer + 5
     
@@ -300,14 +284,13 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
     initial_angle_triangle = 0
     initial_angle_triangle_rad = initial_angle_triangle*np.pi/180
     
-    final_angle_triangle  = 40
+    final_angle_triangle  = 10
     final_angle_triangle_rad = final_angle_triangle*np.pi/180
     
     triangle_end_x = n_contact_outer + 500
     
     triangle_initial_end_y = triangle_end_x*np.tan(initial_angle_triangle_rad)
     triangle_final_end_y   = triangle_end_x*np.tan(final_angle_triangle_rad)
-    
     
     triangle = gdstk.Polygon([(n_contact_x, n_contact_y),
                               (triangle_end_x + x_offset, -triangle_initial_end_y + y_offset),
@@ -331,7 +314,6 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
                             datatype=layer_data['contact_pads']['datatype'])
     
     contact_pad_arch = contact_pad_arch[0]
-    # chip_mask.add_polygon('contact_pads', contact_pad_arch)
     
     points_contact_pad = contact_pad_arch.points
     contact_pad_x = points_contact_pad[:, 0]
@@ -366,19 +348,22 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
     
     taper_left = gdstk.Polygon([(x1, y1),
                                 (x2, y2),
-                                ( contact_pad_side/2 + contact_pad_x_offset,  contact_pad_side/2 - 35),
-                                (-contact_pad_side/2 + contact_pad_x_offset,  contact_pad_side/2 - 35)],
+                                ( contact_pad_side/2 + contact_pad_x_offset - 10,  contact_pad_side/2 + contact_pad_y_offset - 35),
+                                (-contact_pad_side/2 + contact_pad_x_offset + 9,  contact_pad_side/2 + contact_pad_y_offset - 35)],
                                   layer=layer_data['contact_pads']['layer_number'],
                                   datatype=layer_data['contact_pads']['datatype'])
     
     left_full_n_contact = gdstk.boolean(left_contact_pad, contact_pad_arch, 'or')
-    left_full_n_contact = gdstk.boolean(left_full_n_contact, taper_left, 'or')
+    left_full_n_contact = gdstk.boolean(left_full_n_contact, taper_left, 'or', layer=layer_data['contact_pads']['layer_number'], datatype=layer_data['contact_pads']['datatype'])
+    
+    left_full_n_contact[0].fillet(100, tolerance=0.001)
+    
     chip_mask.add_polygon_list('contact_pads', left_full_n_contact)
     
     taper_right = gdstk.Polygon([(x_offset, y_offset),
                                 (x_offset + 10, y_offset),
-                                (contact_pad_side/2 + contact_pad_x_offset + probe_pitch,  contact_pad_side/2 - 35),
-                                (-contact_pad_side/2 + contact_pad_x_offset + probe_pitch,  contact_pad_side/2 - 35)],
+                                (contact_pad_side/2 + contact_pad_x_offset + probe_pitch - 7,  contact_pad_side/2 + contact_pad_y_offset - 35),
+                                (-contact_pad_side/2 + contact_pad_x_offset + probe_pitch + 7,  contact_pad_side/2 + contact_pad_y_offset - 35)],
                                   layer=layer_data['contact_pads']['layer_number'],
                                   datatype=layer_data['contact_pads']['datatype'])
     
@@ -390,26 +375,29 @@ def VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
                             datatype=layer_data['contact_pads']['datatype'])
     
     taper_right = taper_right[0]
-    chip_mask.add_polygon('contact_pads', taper_right)
     
+    
+    right_full_n_contact = gdstk.boolean(right_contact_pad, taper_right, 'or', layer=layer_data['contact_pads']['layer_number'],
+    datatype=layer_data['contact_pads']['datatype'])
+    right_full_n_contact[0].fillet(100, tolerance=0.001)
+    
+    chip_mask.add_polygon_list('contact_pads', right_full_n_contact)
+    
+    
+    
+    ## EIGHT LAYER
     bond_pad_margin = 3
-    
-    bond_pad_left = gdstk.Polygon([(-contact_pad_side/2 + bond_pad_margin + contact_pad_x_offset, -contact_pad_side/2 + bond_pad_margin + contact_pad_y_offset),
-                                      ( contact_pad_side/2 - bond_pad_margin + contact_pad_x_offset, -contact_pad_side/2 + bond_pad_margin+ contact_pad_y_offset),
-                                      ( contact_pad_side/2 - bond_pad_margin + contact_pad_x_offset,  contact_pad_side/2 - bond_pad_margin + contact_pad_y_offset),
-                                      (-contact_pad_side/2 + bond_pad_margin + contact_pad_x_offset,  contact_pad_side/2 - bond_pad_margin + contact_pad_y_offset)],
-                                        layer=layer_data['bond_pads']['layer_number'], datatype=layer_data['bond_pads']['datatype'])
-    
-    chip_mask.add_polygon('bond_pads', bond_pad_left)
+    bond_pad_radius = contact_pad_radius - bond_pad_margin
+    chip_mask.create_circle('bond_pads', contact_pad_x_offset + probe_pitch, contact_pad_y_offset, bond_pad_radius)
+    chip_mask.create_circle('bond_pads', contact_pad_x_offset, contact_pad_y_offset, bond_pad_radius)
     
     
-    bond_pad_right = gdstk.Polygon([(-contact_pad_side/2 + bond_pad_margin + contact_pad_x_offset + probe_pitch, -contact_pad_side/2 + bond_pad_margin + contact_pad_y_offset),
-                                       ( contact_pad_side/2 - bond_pad_margin + contact_pad_x_offset + probe_pitch, -contact_pad_side/2 + bond_pad_margin + contact_pad_y_offset),
-                                       ( contact_pad_side/2 - bond_pad_margin + contact_pad_x_offset + probe_pitch,  contact_pad_side/2 - bond_pad_margin + contact_pad_y_offset),
-                                       (-contact_pad_side/2 + bond_pad_margin + contact_pad_x_offset + probe_pitch,  contact_pad_side/2 - bond_pad_margin + contact_pad_y_offset)],
-                                        layer=layer_data['bond_pads']['layer_number'], datatype=layer_data['bond_pads']['datatype'])
+    ## NINTH LAYER
+    x_offset_MS_align_top  = 125
+    y_offset_MS_align_top  = 150
+    chip_mask.create_rectangle('MS_align', contact_pad_x_offset, contact_pad_y_offset, bond_pad_radius)
     
-    chip_mask.add_polygon('bond_pads', bond_pad_right)
+    
     
 def main():
     
@@ -434,14 +422,21 @@ def main():
     # Adds frames, alignment marks, orintation arrow, TLM structures and labels
     (chip_size_x, chip_size_y, frame_size_x, frame_size_y) = create_chip_necessities(chip_mask)
 
-    x_offset = 100.0
-    y_offset = 100.0
+    x_offset = -2500.0
+    y_offset = 2800.0
     
     mesa_diameter = 20.0
     mesa_radius   = mesa_diameter/2.0
 
-    VCSEL(x_offset, y_offset, mesa_radius, chip_mask, layer_data)
+    VCSEL_no_trenches(x_offset, y_offset, mesa_radius, chip_mask, layer_data)
     
+
+    # for i in range(10):
+    #     for j in range(10):
+    #         VCSEL_no_trenches(x_offset + 240.0*i, y_offset - 240*j, mesa_radius, chip_mask, layer_data)
+            
+            
+            
     # Save .gds-file
     save_layout = True
     save_gds_file(chip_mask, mask_name, mask_folder, save_layout)

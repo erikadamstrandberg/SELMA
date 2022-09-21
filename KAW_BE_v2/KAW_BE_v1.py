@@ -413,9 +413,9 @@ def main():
     create_folder_for_mask(mask_folder)
 
     # Mask names
-    mask_name   = 'KAW_BE_v2'
+    mask_name   = 'KAW_BE_v1'
     # Name of top cell
-    cell_name   = 'KAW_BE_v2'
+    cell_name   = 'KAW_BE_v1'
     
     # Setup GDS library and create all needed variables!
     chip_mask = setup_gds_lib(mask_name, cell_name, layer_data)
@@ -424,13 +424,19 @@ def main():
     # Adds frames, alignment marks, orintation arrow, TLM structures and labels
     (chip_size_x, chip_size_y, frame_size_x, frame_size_y) = create_chip_necessities(chip_mask)
 
-    x_offset = 100
-    y_offset = 100
+    x_offset = -2400
+    y_offset = 2400
     
     p_ring_inner = 7.75 - 4.5
     p_ring_outer = 7.75
+    
+    VCSEL(x_offset  , y_offset, p_ring_inner, p_ring_outer, chip_mask, layer_data)
 
-    VCSEL(x_offset, y_offset, p_ring_inner, p_ring_outer, chip_mask, layer_data)
+    # for i in range(10):
+    #     for j in range(10):
+    #         VCSEL(x_offset + 250*i, y_offset - 250*j, p_ring_inner, p_ring_outer, chip_mask, layer_data)
+    
+    
     
     # Save .gds-file
     save_layout = True
