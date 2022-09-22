@@ -60,42 +60,42 @@ def create_chip_necessities(chip_mask):
     
     # TLM circle pads
     # p-circles
-    left_circles_x = -1875
+    left_circles_x = -2300
     left_circles_y = 50
     chip_mask.create_TLM_circles('p_ring', left_circles_x, left_circles_y)
     
     
-    lower_circles_x = -400
-    lower_circles_y = -3300
-    chip_mask.create_TLM_circles('p_ring', lower_circles_x, lower_circles_y)
+    # lower_circles_x = -400
+    # lower_circles_y = -3300
+    # chip_mask.create_TLM_circles('p_ring', lower_circles_x, lower_circles_y)
     
     # n-circles
-    left_circles_x = 1875
+    left_circles_x = 2300
     left_circles_y = 50
     chip_mask.create_TLM_circles('n_ring', left_circles_x, left_circles_y)
     
-    lower_circles_x = -400
-    lower_circles_y = -3800
-    chip_mask.create_TLM_circles('n_ring', lower_circles_x, lower_circles_y)
+    # lower_circles_x = -400
+    # lower_circles_y = -3800
+    # chip_mask.create_TLM_circles('n_ring', lower_circles_x, lower_circles_y)
     
     # TLM rectangle pads
     # p-pads
-    pads_right_x = 665
+    pads_right_x = 1000
     pads_right_y = 50
     chip_mask.create_TLM_pads('p_ring', -pads_right_x, pads_right_y)
     
-    pads_lower_x = -200
-    pads_lower_y = -3100
-    chip_mask.create_TLM_pads('p_ring', pads_lower_x, pads_lower_y)
+    # pads_lower_x = -200
+    # pads_lower_y = -3100
+    # chip_mask.create_TLM_pads('p_ring', pads_lower_x, pads_lower_y)
     
     # n-pads
-    pads_left_x = 1100
+    pads_left_x = 1400
     pads_left_y = 50
     chip_mask.create_TLM_pads('n_ring', pads_left_x, pads_left_y)
    
-    pads_lower_x = -200
-    pads_lower_y = -3600
-    chip_mask.create_TLM_pads('n_ring', pads_lower_x, pads_lower_y)
+    # pads_lower_x = -200
+    # pads_lower_y = -3600
+    # chip_mask.create_TLM_pads('n_ring', pads_lower_x, pads_lower_y)
 
 
     # Add labels
@@ -393,12 +393,24 @@ def VCSEL_no_trenches(x_offset, y_offset, mesa_radius, chip_mask, layer_data):
     
     
     ## NINTH LAYER
-    x_offset_MS_align_top  = 125
-    y_offset_MS_align_top  = 150
-    chip_mask.create_rectangle('MS_align', contact_pad_x_offset, contact_pad_y_offset, bond_pad_radius)
+    ms_align_side = 20
+    x_offset_MS_align_top_right  = x_offset - 125
+    y_offset_MS_align_top_right  = y_offset + 150
     
+    x_offset_MS_align_top_left = x_offset + 125
+    y_offset_MS_align_top_left = y_offset + 150
     
+    x_offset_MS_align_bottom_right  = x_offset - 125
+    y_offset_MS_align_bottom_right  = y_offset - 150
     
+    x_offset_MS_align_bottom_left = x_offset + 125
+    y_offset_MS_align_bottom_left = y_offset - 150
+    
+    chip_mask.create_rectangle('MS_align', x_offset_MS_align_top_right, y_offset_MS_align_top_right, ms_align_side, ms_align_side)
+    chip_mask.create_rectangle('MS_align', x_offset_MS_align_top_left, y_offset_MS_align_top_left, ms_align_side, ms_align_side)
+    chip_mask.create_rectangle('MS_align', x_offset_MS_align_bottom_right, y_offset_MS_align_bottom_right, ms_align_side, ms_align_side)
+    chip_mask.create_rectangle('MS_align', x_offset_MS_align_bottom_left, y_offset_MS_align_bottom_left, ms_align_side, ms_align_side)
+
 def main():
     
     save_mask_for_ordering = False
@@ -422,19 +434,129 @@ def main():
     # Adds frames, alignment marks, orintation arrow, TLM structures and labels
     (chip_size_x, chip_size_y, frame_size_x, frame_size_y) = create_chip_necessities(chip_mask)
 
-    x_offset = -2500.0
-    y_offset = 2800.0
-    
-    mesa_diameter = 20.0
-    mesa_radius   = mesa_diameter/2.0
 
-    VCSEL_no_trenches(x_offset, y_offset, mesa_radius, chip_mask, layer_data)
+    ## VCSEL in each qudrant
+    number_of_VCSEL_columns = 9
+    number_of_VCSEL_rows = 9
     
+    ## Offset for VCSEL qudrants
+    x_offset_0_0 = -2600.0
+    y_offset_0_0 = 2800.0
+    
+    x_offset_1_0 = 600.0
+    y_offset_1_0 = y_offset_0_0
+    
+    x_offset_0_1 = x_offset_0_0
+    y_offset_0_1 = -300
+    
+    x_offset_1_1 = x_offset_1_0
+    y_offset_1_1 = y_offset_0_1
+    
+    x_offset_between_VCSEL = 250.0
+    y_offset_between_VCSEL = 300.0
+    
+    
+    # VCSEL_no_trenches(x_offset, y_offset, mesa_radius, chip_mask, layer_data)
+    aperture_size = np.array([1.0, 1.5, 2.0, 2.0, 2.5, 2.5, 3.0, 3.5, 4.0])
+    mesa_diameter = aperture_size + 19.0
+    mesa_radius = mesa_diameter/2.0
 
-    # for i in range(10):
-    #     for j in range(10):
-    #         VCSEL_no_trenches(x_offset + 240.0*i, y_offset - 240*j, mesa_radius, chip_mask, layer_data)
+
+    ## 0.0 qudrant
+    for i in range(number_of_VCSEL_columns):
+        for j in range(number_of_VCSEL_rows):
+            VCSEL_no_trenches(x_offset_0_0 + x_offset_between_VCSEL*i, y_offset_0_0 - y_offset_between_VCSEL*j, mesa_radius[j], chip_mask, layer_data)
             
+ 
+    
+    ## 1.0 qudrant
+    for i in range(number_of_VCSEL_columns):
+        for j in range(number_of_VCSEL_rows):
+            VCSEL_no_trenches(x_offset_1_0 + x_offset_between_VCSEL*i, y_offset_1_0 - y_offset_between_VCSEL*j, mesa_radius[j], chip_mask, layer_data)
+
+    ## 0.1 qudrant
+    for i in range(number_of_VCSEL_columns):
+        for j in range(number_of_VCSEL_rows - 1):
+            VCSEL_no_trenches(x_offset_0_1 + x_offset_between_VCSEL*i, y_offset_0_1 - y_offset_between_VCSEL*j, mesa_radius[j], chip_mask, layer_data)
+    
+    ## 1.1 qudrant
+    for i in range(number_of_VCSEL_columns):
+        for j in range(number_of_VCSEL_rows - 1):
+            VCSEL_no_trenches(x_offset_1_1 + x_offset_between_VCSEL*i, y_offset_1_1 - y_offset_between_VCSEL*j, mesa_radius[j], chip_mask, layer_data)
+                 
+            
+    y_offset_open_witness_mesa = 20
+    width_open_witness_mesa = 80
+    height_open_witness_mesa = 140
+    
+    x_offset_label = 25
+    y_offset_label = 30
+    label_text_size = 50
+    
+    witness_mesa_margin = 4
+
+    ## 0.0 witness mesa
+    for j in range(number_of_VCSEL_rows):
+        if mesa_diameter[j].is_integer():
+            chip_mask.create_label('mesa', x_offset_0_0 - x_offset_between_VCSEL - x_offset_label, y_offset_0_0 - y_offset_between_VCSEL*j + y_offset_label, label_text_size, str(round(mesa_diameter[j])))
+        else:
+            chip_mask.create_label('mesa', x_offset_0_0 - x_offset_between_VCSEL - x_offset_label, y_offset_0_0 - y_offset_between_VCSEL*j + y_offset_label, label_text_size, str(round(mesa_diameter[j])))
+     
+        chip_mask.create_circle('mesa', x_offset_0_0 - x_offset_between_VCSEL, y_offset_0_0 - y_offset_between_VCSEL*j, mesa_radius[j])
+        chip_mask.create_rectangle('open_sidewalls', x_offset_0_0 - x_offset_between_VCSEL, y_offset_0_0 - y_offset_between_VCSEL*j + y_offset_open_witness_mesa, width_open_witness_mesa, height_open_witness_mesa)
+        chip_mask.create_rectangle('witness_mesa', x_offset_0_0 - x_offset_between_VCSEL, y_offset_0_0 - y_offset_between_VCSEL*j + y_offset_open_witness_mesa, width_open_witness_mesa - witness_mesa_margin, height_open_witness_mesa - witness_mesa_margin)
+        chip_mask.create_rectangle('open_contacts', x_offset_0_0 - x_offset_between_VCSEL, y_offset_0_0 - y_offset_between_VCSEL*j + y_offset_open_witness_mesa, width_open_witness_mesa - witness_mesa_margin, height_open_witness_mesa - witness_mesa_margin)
+
+
+
+
+
+    oxidation_mesa_diameter = np.arange(20, 30.5, 0.5)
+    oxidation_mesa_radius = oxidation_mesa_diameter/2
+    p_ring_outer_oxidation = oxidation_mesa_radius - 2.0
+    p_ring_inner_oxidation = p_ring_outer_oxidation - 4.5
+    
+    x_offset_oxidation = -500
+    y_offset_oxidation = 100
+    
+    oxidation_distance = 50
+    
+    x_offset_oxidation_label = -25
+    y_offset_oxidation_label = -80
+    
+    
+    x_offset_rectangle_oxidation = 500
+    y_offset_rectangle_oxidation = -20
+    width_oxidation = 1200
+    height_oxidation = 200
+    
+    
+    show_label = np.array([20, 25, 30])
+    for i in range(len(oxidation_mesa_diameter)):
+        chip_mask.create_circle('mesa', x_offset_oxidation + i*oxidation_distance, y_offset_oxidation, oxidation_mesa_radius[i])
+        if oxidation_mesa_diameter[i] in show_label:
+            chip_mask.create_label('mesa', x_offset_oxidation + i*oxidation_distance + x_offset_oxidation_label, y_offset_oxidation + y_offset_oxidation_label, label_text_size, str(round(oxidation_mesa_diameter[i])))
+
+    chip_mask.create_rectangle('open_sidewalls', x_offset_oxidation + x_offset_rectangle_oxidation, y_offset_oxidation + y_offset_rectangle_oxidation, width_oxidation, height_oxidation)
+    chip_mask.create_rectangle('witness_mesa', x_offset_oxidation + x_offset_rectangle_oxidation, y_offset_oxidation + y_offset_rectangle_oxidation, width_oxidation - witness_mesa_margin, height_oxidation - witness_mesa_margin)
+    chip_mask.create_rectangle('open_contacts', x_offset_oxidation + x_offset_rectangle_oxidation, y_offset_oxidation + y_offset_rectangle_oxidation, width_oxidation - witness_mesa_margin, height_oxidation - witness_mesa_margin)
+
+    
+    
+
+    x_offset_alignment_VCSEL = -800.0
+    y_offset_alignment_VCSEL = -3200.0
+    x_offset_between_alignment_VCSEL = 250.0
+    y_offset_between_alignment_VCSEL = 300.0
+
+    aperture_size_alignment_VCSEL = 2.0
+    mesa_diameter_alignment_VCSEL = aperture_size_alignment_VCSEL + 19.0
+    mesa_radius_alignment_VCSEL = mesa_diameter_alignment_VCSEL/2.0
+    
+    ## Alignment VCSELs
+    for i in range(4):
+        for j in range(3):
+            VCSEL_no_trenches(x_offset_alignment_VCSEL + x_offset_between_alignment_VCSEL*i, y_offset_alignment_VCSEL - y_offset_between_alignment_VCSEL*j, mesa_radius_alignment_VCSEL, chip_mask, layer_data)
             
             
     # Save .gds-file
