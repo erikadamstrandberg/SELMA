@@ -506,7 +506,6 @@ def main():
     
     
     
-    
     # Save .gds-file
     save_layout = True
     save_gds_file(chip_mask, mask_name, mask_folder, save_layout)
