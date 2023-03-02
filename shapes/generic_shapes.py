@@ -64,7 +64,48 @@ def create_rectangle(key, x, y, x_size, y_size, layer_data, rotation=0):
                             layer=layer_data[key]['layer_number'],
                             datatype=layer_data[key]['datatype']).rotate(rotation)
     
+    
     return polygon
-            
+
+def create_polygon(key, x1, y1, x2, y2, x3, y3, x4, y4, layer_data, rotation=0):
+      
+    polygon = gdstk.Polygon([(x1, y1),
+                             (x2, y2),
+                             (x3, y3),
+                             (x4, y4)],
+                            layer=layer_data[key]['layer_number'],
+                            datatype=layer_data[key]['datatype']).rotate(rotation)
+    
+    return polygon
+
+
+def create_rotated_rectangle(key, x, y, x_size, y_size, layer_data, rotation):
+    x1= x_size/2
+    y1= y_size/2
+    the = rotation
+    
+    #Rotate the angles, use X = x*cos(θ) - y*sin(θ) and Y = x*sin(θ) + y*cos(θ)
+    
+    rotatedX1 = x1*np.cos(the) - y1*np.sin(the)
+    rotatedY1 = x1*np.sin(the) + y1*np.cos(the)
+    
+    rotatedX2 = -x1*np.cos(the) - y1*np.sin(the)
+    rotatedY2 = -x1*np.sin(the) + y1*np.cos(the)
+    
+    rotatedX3 = x1*np.cos(the) + y1*np.sin(the)
+    rotatedY3 = x1*np.sin(the) - y1*np.cos(the)
+    
+    rotatedX4 = -x1*np.cos(the) + y1*np.sin(the)
+    rotatedY4 = -x1*np.sin(the) - y1*np.cos(the)
+
+    
+    polygon = gdstk.Polygon([(x + rotatedX1, y + rotatedY1),
+                             (x + rotatedX3, y + rotatedY3),
+                             (x + rotatedX4, y + rotatedY4),
+                             (x + rotatedX2, y + rotatedY2)],
+                            layer=layer_data[key]['layer_number'],
+                            datatype=layer_data[key]['datatype']).rotate(0)
     
     
+    return polygon
+
