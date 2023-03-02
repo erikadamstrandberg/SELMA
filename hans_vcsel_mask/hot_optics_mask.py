@@ -15,7 +15,7 @@ if shapes_folder not in sys.path:
 if gdstk_setup_folder not in sys.path:
     sys.path.append(gdstk_setup_folder)
     
-from generic_shapes import create_rectangle, create_circle, create_half_annulus, create_rotated_rectangle
+from generic_shapes import create_rectangle, create_circle, create_half_annulus, create_rotated_rectangle, create_polygon
 from initialize_layer_data import create_layer_data
 from manage_gdstk import setup_gds_lib, save_gds_file, create_folder_for_mask
 
@@ -420,9 +420,9 @@ def main():
             x4 = x+separation/2 - width_contact/2*(1-np.sin(angle_to_p_pad_centre))
             y4 = y-y_offset - width_contact/2*np.cos(angle_to_p_pad_centre)
             
-            polygon_1 = create_polygon('contact_pads',x1, y1, x2, y2, x3, y3, x4, y4,layer_data)
+            polygon_1 = create_polygon('contact_pads',x1, y1, x2, y2, x3, y3, x4, y4,layer_data=layer_data)
             #chip_mask.create_polygon('contact_pads', x1, y1, x2, y2, x3, y3, x4, y4)
-            chip_mask.add_polygon_list('contact_pads', polygon_1)
+            chip_mask.add_polygon('contact_pads', polygon_1)
             
             #pad_circ = create_circle('contact_pads', x+separation/2, y-y_offset, width_contact/2, layer_data=layer_data, tolerance = 0.005)
             chip_mask.create_circle('contact_pads', x+separation/2, y-y_offset, width_contact/2)

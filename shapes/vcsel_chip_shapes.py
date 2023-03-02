@@ -1,7 +1,7 @@
 #%%
 
 import gdstk
-from generic_shapes import create_rectangle, create_annulus
+from generic_shapes import create_rectangle, create_annulus, create_polygon
 import numpy as np
 
 
