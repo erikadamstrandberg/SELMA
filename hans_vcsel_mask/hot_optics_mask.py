@@ -63,7 +63,7 @@ def create_chip_necessities(chip_mask):
     # TLM circle pads
     # p-circles
     left_circles_x = -1875
-    left_circles_y = 50
+    left_circles_y = 0
     chip_mask.create_TLM_circles('p_ring', left_circles_x, left_circles_y)
     
     
@@ -73,7 +73,7 @@ def create_chip_necessities(chip_mask):
     
     # n-circles
     left_circles_x = 1875
-    left_circles_y = 50
+    left_circles_y = 0
     chip_mask.create_TLM_circles('n_ring', left_circles_x, left_circles_y)
     
     lower_circles_x = -400
@@ -83,7 +83,7 @@ def create_chip_necessities(chip_mask):
     # TLM rectangle pads
     # p-pads
     pads_right_x = 665
-    pads_right_y = 50
+    pads_right_y = 0
     chip_mask.create_TLM_pads('p_ring', -pads_right_x, pads_right_y)
     
     pads_lower_x = -200
@@ -92,7 +92,7 @@ def create_chip_necessities(chip_mask):
     
     # n-pads
     pads_left_x = 1100
-    pads_left_y = 50
+    pads_left_y = 0
     chip_mask.create_TLM_pads('n_ring', pads_left_x, pads_left_y)
    
     pads_lower_x = -200
@@ -106,6 +106,7 @@ def create_chip_necessities(chip_mask):
     label_distance_y = 60
     
     chip_mask.create_all_labels(label_x, label_y, label_distance_y)
+    chip_mask.create_all_labels_overlap(-chip_size_x/2, -chip_size_y/2-600)
     
     return (chip_size_x, chip_size_y, frame_size_x, frame_size_y)
 
@@ -171,37 +172,80 @@ def main():
 
     
     ## LAYER 1: p_ring
-    p_ring_outer_d =  13
-    p_ring_inner_d =  6
+    p_ring_outer_d_array =  np.array([19, 21, 23, 25, 19, 21, 23, 25, 19, 21, 23, 25, 19, 21, 23, 25])
+    p_ring_inner_d_array =  np.array([8, 10, 12, 14, 8, 10, 12, 14, 8, 10, 12, 14, 8, 10, 12, 14])
     
-    p_ring_outer_r = p_ring_outer_d/2
-    p_ring_inner_r = p_ring_inner_d/2
+    p_ring_outer_d_array =  np.array([25, 23, 21, 19, 25, 23, 21, 19, 25, 23, 21, 19, 25, 23, 21, 19])
+    p_ring_inner_d_array =  np.array([14, 12, 10, 8, 14, 12, 10, 8, 14, 12, 10, 8, 14, 12, 10, 8])
+    
+    p_ring_outer_r_array = p_ring_outer_d_array/2
+    p_ring_inner_r_array = p_ring_inner_d_array/2
     
     for x in x_coordinates:
-        for y in y_coordinates:
-            chip_mask.create_annulus('p_ring', x, y, p_ring_inner_r, p_ring_outer_r)
+        for j in range(len(y_coordinates)):
+            chip_mask.create_annulus('p_ring', x, y_coordinates[j], p_ring_inner_r_array[j], p_ring_outer_r_array[j])
             
     ## Layer 2: top mesa
-    top_mesa_d = p_ring_outer_d + 1
-    top_mesa_r = top_mesa_d/2
+    top_mesa_d_array =  p_ring_outer_d_array + 4
+    top_mesa_r_array = top_mesa_d_array/2
     
     for x in x_coordinates:
-        for y in y_coordinates:
-            chip_mask.create_circle('mesa', x, y, top_mesa_r)
+        for j in range(len(y_coordinates)):
+            chip_mask.create_circle('mesa', x, y_coordinates[j], top_mesa_r_array[j])
             
-    ## Layer 3: SiNx open
-    sinx_open_inner_d = p_ring_outer_d - 3
-    sinx_open_inner_r = sinx_open_inner_d/2
+    #Create witness mesas
+    # Minor mesa structures: 3 columns of witness mesas running along rows
+    # Major mesa structure: includes more mesas in the centre of chip
+    # create coordinates for the minor witness mesa structures
     
-    sinx_open_outer_d = 30
+    #Create the centre coordinates for the minor mesa structures
+    x_wit_mes = x_edge + 245      #x coordinate abs value for edge mesa structures
+    x_coordinates_wit_mes = np.array([-x_wit_mes, 0, x_wit_mes])
+    y_coordinates_wit_mes = y_coordinates - 30
+
+    #Define relative coordinates in minor mesa structures for circles
+    d_witness_mesa_minor_array = np.linspace(29,23,7)
+    x_relative_mesa_array = np.array([0, 50])
+    y_relative_mesa_array = np.linspace(-120,120,7)
+    
+    #Oxide aperture and top mesa num arrays to in
+    
+    
+    for x_c in x_coordinates_wit_mes:
+        for i in range(len(y_coordinates_wit_mes)):
+            y_c = y_coordinates_wit_mes[i]
+            
+            # Create circle matching the rows mesa size
+            chip_mask.create_circle('mesa', x_c-50, y_c, top_mesa_r_array[i])
+            #Create label corresponding to mesa size
+            chip_mask.create_label('mesa', x_c-78, y_c - 77, 50, str(top_mesa_d_array[i]-1))
+            chip_mask.create_label('mesa', x_c-62, y_c + 23, 50, str(top_mesa_d_array[i]-20))
+            
+            
+            for x_r in x_relative_mesa_array:
+                for j in range(len(y_relative_mesa_array)):
+                    y_r = y_relative_mesa_array[j]
+                    chip_mask.create_circle('mesa', x_c+x_r, y_c + y_r, d_witness_mesa_minor_array[j]/2)
+                    
+    
+    
+    ## Layer 3: SiNx open
+    sinx_open_inner_d_array = p_ring_outer_d_array - 1
+    sinx_open_inner_r_array = sinx_open_inner_d_array/2
+    
+    sinx_open_outer_d = 40
     sinx_open_outer_r = sinx_open_outer_d/2
     
     for x in x_coordinates:
-        for y in y_coordinates:
-            chip_mask.create_annulus('open_sidewalls', x, y, sinx_open_inner_r, sinx_open_outer_r)
+        for j in range(len(y_coordinates)):
+            chip_mask.create_annulus('open_sidewalls', x, y_coordinates[j], sinx_open_inner_r_array[j], sinx_open_outer_r)
+    
+    for x in x_coordinates_wit_mes:
+        for y in y_coordinates_wit_mes:
+            chip_mask.create_rectangle('open_sidewalls', x, y, 170, 280)
             
     ## Layer 4: Bottom mesa
-    bottom_mesa_d = sinx_open_outer_d + 20
+    bottom_mesa_d = sinx_open_outer_d + 10
     bottom_mesa_r = bottom_mesa_d/2
 
     for x in x_coordinates:
@@ -218,7 +262,7 @@ def main():
     angle_start_75 = np.pi/4
     
     n_contact_inner_d =  bottom_mesa_d + 10
-    n_contact_outer_d =  n_contact_inner_d + 100
+    n_contact_outer_d =  n_contact_inner_d + 110
     
     n_contact_inner_r =  n_contact_inner_d/2
     n_contact_outer_r_100 =   n_contact_outer_d/2
@@ -226,24 +270,24 @@ def main():
     n_contact_outer_r_75 = n_contact_outer_r_100/np.sqrt(4/3)
     
     
-    angle_start_array = np.array([angle_start_100, angle_start_75, angle_start_100, angle_start_50, angle_start_50, angle_start_100, angle_start_75, angle_start_100, angle_start_50, angle_start_50, angle_start_100, angle_start_75, angle_start_100, angle_start_50, angle_start_50, angle_start_100])
+    angle_start_array = np.array([angle_start_100, angle_start_50, angle_start_50, angle_start_100, angle_start_75, angle_start_100, angle_start_50, angle_start_50, angle_start_100, angle_start_75, angle_start_100, angle_start_50, angle_start_50, angle_start_100])
     angle_stop_array =  np.array([angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop, angle_stop])
     
     n_contact_inner_r_array = np.array([n_contact_inner_r, n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r,n_contact_inner_r])
-    n_contact_outer_r_array = np.array([n_contact_outer_r_100,  n_contact_outer_r_75, n_contact_outer_r_50, n_contact_outer_r_100, n_contact_outer_r_50, n_contact_outer_r_100,  n_contact_outer_r_75, n_contact_outer_r_50, n_contact_outer_r_100, n_contact_outer_r_50, n_contact_outer_r_100,  n_contact_outer_r_75, n_contact_outer_r_50, n_contact_outer_r_100, n_contact_outer_r_50, n_contact_outer_r_100])
+    n_contact_outer_r_array = np.array([n_contact_outer_r_100,  n_contact_outer_r_50, n_contact_outer_r_100, n_contact_outer_r_50, n_contact_outer_r_75, n_contact_outer_r_100,  n_contact_outer_r_50, n_contact_outer_r_100, n_contact_outer_r_50, n_contact_outer_r_75,n_contact_outer_r_100,  n_contact_outer_r_50, n_contact_outer_r_100, n_contact_outer_r_50])
     
     
     
     for i in range(len(x_coordinates)):
         for j in range(len(y_coordinates)):
-            chip_mask.create_half_annulus('n_ring', x_coordinates[i], y_coordinates[j],n_contact_inner_r_array[j], n_contact_outer_r_array[j],angle_start_array[j], angle_stop_array[j])
+            chip_mask.create_half_annulus('n_ring', x_coordinates[i], y_coordinates[j],n_contact_inner_r_array[i], n_contact_outer_r_array[i],angle_start_array[i], angle_stop_array[i])
  
     # ## Layer 6:
     # calculate the radial overlap in terms of 
     
     for i in range(len(x_coordinates)):
         for j in range(len(y_coordinates)):
-            r_inner = n_contact_inner_r_array[j]
+            r_inner = n_contact_inner_r_array[i]
 
             # Set margins compared to previous layer
             radial_margin = 5        #um
@@ -253,12 +297,12 @@ def main():
             angular_margin_ang = angular_margin_dist/r_inner
             
             #Set angle start and stop with margins.
-            ang_start = angle_start_array[j] - angular_margin_ang
-            ang_stop = angle_stop_array[j] + angular_margin_ang
+            ang_start = angle_start_array[i] - angular_margin_ang
+            ang_stop = angle_stop_array[i] + angular_margin_ang
             
             #Set radial start and stop with margins.
-            r_start = n_contact_inner_r_array[j]
-            r_stop =  n_contact_outer_r_array[j] + radial_margin
+            r_start = n_contact_inner_r_array[i]
+            r_stop =  n_contact_outer_r_array[i] + radial_margin
             
 
             
@@ -266,6 +310,10 @@ def main():
             half_ann = create_half_annulus('open_contacts', x_coordinates[i], y_coordinates[j], r_start-1, r_stop, ang_start, ang_stop, layer_data=layer_data, tolerance = 0.005)
             n_contact_open = gdstk.boolean(circ, half_ann, 'or', layer=layer_data['open_contacts']['layer_number'],datatype=layer_data['open_contacts']['datatype'])
             chip_mask.add_polygon_list('open_contacts', n_contact_open)
+            
+    for x in x_coordinates_wit_mes:
+        for y in y_coordinates_wit_mes:
+            chip_mask.create_rectangle('open_contacts', x, y, 170, 280)
             
     ## Layer 7: BCB
     bcb_inner_r_array = n_contact_inner_r_array + 5
@@ -291,7 +339,7 @@ def main():
     for i in range(len(x_coordinates)):
         for j in range(len(y_coordinates)):
            ind_rect =  create_rectangle('bcb', x_coordinates[i]+offset_x, y_coordinates[j]+offset_y, d_x_bcb, d_y_bcb, layer_data=layer_data, rotation=0)
-           half_ann_bcb = create_half_annulus('bcb', x_coordinates[i], y_coordinates[j], bcb_inner_r_array[j], bcb_outer_r_array[j], angle_start_array_bcb[j], angle_stop_array_bcb[j], layer_data=layer_data, tolerance = 0.005)
+           half_ann_bcb = create_half_annulus('bcb', x_coordinates[i], y_coordinates[j], bcb_inner_r_array[i], bcb_outer_r_array[i], angle_start_array_bcb[i], angle_stop_array_bcb[i], layer_data=layer_data, tolerance = 0.005)
            bcb_cell = gdstk.boolean(ind_rect, half_ann_bcb, 'not', layer=layer_data['bcb']['layer_number'],datatype=layer_data['bcb']['datatype'])
            bcb_frame = gdstk.boolean(bcb_frame, bcb_cell, 'not', layer=layer_data['bcb']['layer_number'],datatype=layer_data['bcb']['datatype'])
 
@@ -308,7 +356,7 @@ def main():
     chip_mask.add_polygon_list('bcb', big_frame)
     
     
-    ## Layer 8: BCB contact etch
+    ## Layer 8a: BCB contact etch
     bcb_cont_inner_r_array = bcb_inner_r_array + 2.5
     bcb_cont_outer_r_array = bcb_outer_r_array - 2.5
     
@@ -325,7 +373,7 @@ def main():
     
     for i in range(len(x_coordinates)):
         for j in range(len(y_coordinates)):
-           chip_mask.create_half_annulus('bcb_etch_cont', x_coordinates[i], y_coordinates[j],  bcb_cont_inner_r_array[j], bcb_cont_outer_r_array[j], angle_start_array_bcb_cont[j], angle_stop_array_bcb_cont[j])
+           chip_mask.create_half_annulus('bcb_etch_cont', x_coordinates[i], y_coordinates[j],  bcb_cont_inner_r_array[i], bcb_cont_outer_r_array[i], angle_start_array_bcb_cont[i], angle_stop_array_bcb_cont[i])
            
     # Cover alignment marks of BCB layer
     x_bcb_algn = 2250
@@ -350,14 +398,40 @@ def main():
     chip_mask.create_rectangle('bcb_etch_cont', -x_bcb_algn, -y_bcb_algn, 500, 500)
     chip_mask.create_rectangle('bcb_etch_cont', 0, -3500, 2000, 1000)
            
+    ## Layer 8B: CB ETCH MESA 15:17:19:21 (DC)
+    d_bcb_etch_array_small =  p_ring_outer_d_array - 4
+    r_bcb_etch_array_small =  d_bcb_etch_array_small/2
     
-    # Layer 9: Sinx on BCB
+    for x in x_coordinates:
+        for j in range(len(y_coordinates)):
+            chip_mask.create_circle('bcb_etch_mesa_15-21', x, y_coordinates[j], r_bcb_etch_array_small[j])
+            
+    chip_mask.create_rectangle('bcb_etch_mesa_15-21', x_bcb_algn, y_bcb_algn, 500, 500)
+    chip_mask.create_rectangle('bcb_etch_mesa_15-21', -x_bcb_algn, y_bcb_algn, 500, 500)
+    chip_mask.create_rectangle('bcb_etch_mesa_15-21', x_bcb_algn, -y_bcb_algn, 500, 500)
+    chip_mask.create_rectangle('bcb_etch_mesa_15-21', -x_bcb_algn, -y_bcb_algn, 500, 500)
+            
+    ## Layer 8C: CB ETCH MESA 15:17:19:21 (DC)
+    d_bcb_etch_array_large =  p_ring_outer_d_array - 2
+    r_bcb_etch_array_large =  d_bcb_etch_array_large/2
+    
+    for x in x_coordinates:
+        for j in range(len(y_coordinates)):
+            chip_mask.create_circle('bcb_etch_mesa_17-23', x, y_coordinates[j], r_bcb_etch_array_large[j])
+            
+    chip_mask.create_rectangle('bcb_etch_mesa_17-23', x_bcb_algn, y_bcb_algn, 500, 500)
+    chip_mask.create_rectangle('bcb_etch_mesa_17-23', -x_bcb_algn, y_bcb_algn, 500, 500)
+    chip_mask.create_rectangle('bcb_etch_mesa_17-23', x_bcb_algn, -y_bcb_algn, 500, 500)
+    chip_mask.create_rectangle('bcb_etch_mesa_17-23', -x_bcb_algn, -y_bcb_algn, 500, 500)
+    
+    
+    # Layer 8D: Sinx on BCB
     #do the half annulus
     sinx_on_bcb_half_ann_inner_r_array = bcb_cont_inner_r_array + 2
     sinx_on_bcb_half_ann_outer_r_array = bcb_cont_outer_r_array - 2
     
-    #Create the cricle array
-    sinx_on_cbc_circle_r = top_mesa_r - 2
+    #Create the circle array
+    sinx_on_bcb_circle_r = top_mesa_r_array - 2
     
     #Translate the length unit to angular unit for angular margins
     angular_margin_dist_sinx_on_bcb = 1.5
@@ -367,70 +441,162 @@ def main():
     angle_start_array_sinx_on_bcb = angle_start_array_bcb_cont + angular_margin_ang_sinx_on_bcb_array
     angle_stop_array_sinx_on_bcb = angle_stop_array_bcb_cont - angular_margin_ang_sinx_on_bcb_array
     
+    #Create a big rectangle and then remove all the small features using booleans  
+    bcb_sinx_frame = create_rectangle('sinx_bcb', 0, 0, 6000, 6000, layer_data=layer_data, rotation=0)
+    
+    for i in range(len(x_coordinates)):
+        for j in range(len(y_coordinates)):
+           ind_rect =  create_rectangle('sinx_bcb', x_coordinates[i]+offset_x, y_coordinates[j]+offset_y, d_x_bcb, d_y_bcb, layer_data=layer_data, rotation=0)
+           bcb_sinx_frame = gdstk.boolean(bcb_sinx_frame, ind_rect, 'not', layer=layer_data['sinx_bcb']['layer_number'],datatype=layer_data['sinx_bcb']['datatype'])
+           
+    chip_mask.add_polygon_list('sinx_bcb', bcb_sinx_frame)
+    
     for i in range(len(x_coordinates)):
         for j in range(len(y_coordinates)):
             
             x = x_coordinates[i]
             y = y_coordinates[j]
             
-            half_ann_in_r = sinx_on_bcb_half_ann_inner_r_array[j]
-            half_ann_out_r = sinx_on_bcb_half_ann_outer_r_array[j]
+            half_ann_in_r = sinx_on_bcb_half_ann_inner_r_array[i]
+            half_ann_out_r = sinx_on_bcb_half_ann_outer_r_array[i]
             
-            ang_start = angle_start_array_sinx_on_bcb[j]
-            ang_stop = angle_stop_array_sinx_on_bcb[j]
+            ang_start = angle_start_array_sinx_on_bcb[i]
+            ang_stop = angle_stop_array_sinx_on_bcb[i]
             
         
             
-            chip_mask.create_circle('sinx_bcb', x, y, sinx_on_cbc_circle_r)
+            chip_mask.create_circle('sinx_bcb', x, y, sinx_on_bcb_circle_r[i])
             chip_mask.create_half_annulus('sinx_bcb', x, y, half_ann_in_r, half_ann_out_r, ang_start, ang_stop)
+            
+    #Create outer frame and fill small rect under and above
+    #upper fill
+    alignment_sinx_x = 1750
+    alignment_sinx_y = 3250
+    exclude1= create_rectangle('sinx_bcb', alignment_sinx_x, alignment_sinx_y , 499, 499, layer_data=layer_data, rotation=0)
+    exclude2= create_rectangle('sinx_bcb', -alignment_sinx_x, alignment_sinx_y , 499, 499, layer_data=layer_data, rotation=0)
+    upper_rect_sinx_bcb = create_rectangle('sinx_bcb', 0, 3500, 6000, 1000, layer_data=layer_data, rotation=0)
+    upper_rect_sinx_bcb = gdstk.boolean(upper_rect_sinx_bcb, exclude1, 'not', layer=layer_data['sinx_bcb']['layer_number'], datatype=layer_data['bcb']['datatype'])
+    upper_rect_sinx_bcb = gdstk.boolean(upper_rect_sinx_bcb, exclude2, 'not', layer=layer_data['sinx_bcb']['layer_number'], datatype=layer_data['bcb']['datatype'])
+    chip_mask.add_polygon_list('sinx_bcb', upper_rect_sinx_bcb)
+    
+    #lower fill
+    exclude3= create_rectangle('sinx_bcb', alignment_sinx_x, -alignment_sinx_y , 499, 499, layer_data=layer_data, rotation=0)
+    exclude4= create_rectangle('sinx_bcb', -alignment_sinx_x, -alignment_sinx_y , 499, 499, layer_data=layer_data, rotation=0)
+    lower_rect_sinx_bcb = create_rectangle('sinx_bcb', 0, -3500, 6000, 1000, layer_data=layer_data, rotation=0)
+    lower_rect_sinx_bcb = gdstk.boolean(lower_rect_sinx_bcb, exclude3, 'not', layer=layer_data['sinx_bcb']['layer_number'], datatype=layer_data['bcb']['datatype'])
+    lower_rect_sinx_bcb = gdstk.boolean(lower_rect_sinx_bcb, exclude4, 'not', layer=layer_data['sinx_bcb']['layer_number'], datatype=layer_data['bcb']['datatype'])
+    chip_mask.add_polygon_list('sinx_bcb', lower_rect_sinx_bcb)
+
+    
+    #outer frame
+    big_rect = create_rectangle('sinx_bcb', 0, 0, 8000, 10000, layer_data=layer_data, rotation=0)
+    cutout = create_rectangle('sinx_bcb', 0, 0, 6000, 8000, layer_data=layer_data, rotation=0)
+    big_frame = gdstk.boolean(big_rect, cutout, 'not', layer=layer_data['sinx_bcb']['layer_number'], datatype=layer_data['bcb']['datatype'])
+    chip_mask.add_polygon_list('sinx_bcb', big_frame)
             
     # Layer 10: contact pads
     y_offset = 110 #offset from centre of vcsel to centre of bondpad
     separation = 100 #distance between centre of VCSELs
     width_contact = 75 #diameter of contacts
     
+    # Create the strings for numbering
+    x_label_no = np.array(['01','02','03','04','05','06','07','08','09','10','11', '12', '13', '14', '15', '16'])
+    x_label_no = np.flip(x_label_no)
+    y_label_no = np.array(['01','02','03','04','05','06','07','08','09','10','11', '12', '13', '14'])
     
     #Create contact to p-side in the following order
-    for x in x_coordinates:
-        for y in y_coordinates:            
+    for i in range(len(x_coordinates)):
+        for j in range(len(y_coordinates)):
+            x = x_coordinates[i]
+            y = y_coordinates[j]            
             #top_square = create_rectangle('contact_pads', x+separation/2, y-y_offset, width_contact, width_contact)
             #chip_mask.create_rectangle('contact_pads', x+separation/2, y-y_offset, width_contact, width_contact)
             
             #p-contact
-            small_neg_circ = create_circle('contact_pads', x, y, (p_ring_outer_r + p_ring_inner_r)/2, layer_data=layer_data, tolerance = 0.005)
+            small_neg_circ = create_circle('contact_pads', x, y, (p_ring_outer_r_array[j] + p_ring_inner_r_array[j])/2, layer_data=layer_data, tolerance = 0.005)
             angle_to_p_pad_centre = np.arctan(separation/2/y_offset)
-            rect_length = n_contact_inner_r_array[j]-5
-            rect_width = (p_ring_outer_r + p_ring_inner_r)
+            rect_length = n_contact_inner_r_array[i]-5
+            rect_width = (p_ring_outer_r_array[j] + p_ring_inner_r_array[j])
             rect_x_offset = rect_length/2*np.sin(angle_to_p_pad_centre)
             rect_y_offset = rect_length/2*np.cos(angle_to_p_pad_centre)
             rect_from_tc = create_rotated_rectangle('contact_pads', x+rect_x_offset, y-rect_y_offset, rect_width, rect_length, layer_data, angle_to_p_pad_centre)
             rect_without_circle = gdstk.boolean(rect_from_tc, small_neg_circ, 'not', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
-            chip_mask.add_polygon_list('contact_pads', rect_without_circle)
+            
+            #Now create the rectangle to remove the very sharp tips on the n-contact
+            rect2_length = p_ring_inner_r_array[j]/1.3
+            rect2_width = rect_width + 1
+            rect2_x_offset = rect2_length/2*np.sin(angle_to_p_pad_centre)
+            rect2_y_offset = rect2_length/2*np.cos(angle_to_p_pad_centre)
+            rect2_from_tc = create_rotated_rectangle('contact_pads', x+rect2_x_offset, y-rect2_y_offset, rect2_width, rect2_length, layer_data, angle_to_p_pad_centre)
+            rect_without_circle_smooth = gdstk.boolean(rect_without_circle, rect2_from_tc, 'not', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
             
             #Create the coordinates for the polygon connecting the circular contact pads with the p contact rectangle
-            x1 = x + (rect_width/2*np.cos(angle_to_p_pad_centre) - rect_length/2*np.sin(angle_to_p_pad_centre))
-            y1 = y + (rect_width/2*np.sin(angle_to_p_pad_centre) + rect_length/2*np.cos(angle_to_p_pad_centre))
-            
-            x2 = x + -(rect_width/2*np.cos(angle_to_p_pad_centre) - rect_length/2*np.sin(angle_to_p_pad_centre))
-            y2 = y + -(rect_width/2*np.sin(angle_to_p_pad_centre) + rect_length/2*np.cos(angle_to_p_pad_centre))
-            
-            x3 = x+separation/2 + width_contact/2*(1-np.sin(angle_to_p_pad_centre))
-            y3 = y-y_offset + width_contact/2*np.cos(angle_to_p_pad_centre)
-            
-            x4 = x+separation/2 - width_contact/2*(1-np.sin(angle_to_p_pad_centre))
-            y4 = y-y_offset - width_contact/2*np.cos(angle_to_p_pad_centre)
-            
-            polygon_1 = create_polygon('contact_pads',x1, y1, x2, y2, x3, y3, x4, y4,layer_data=layer_data)
-            #chip_mask.create_polygon('contact_pads', x1, y1, x2, y2, x3, y3, x4, y4)
-            chip_mask.add_polygon('contact_pads', polygon_1)
-            
-            #pad_circ = create_circle('contact_pads', x+separation/2, y-y_offset, width_contact/2, layer_data=layer_data, tolerance = 0.005)
-            chip_mask.create_circle('contact_pads', x+separation/2, y-y_offset, width_contact/2)
+            x2 = x + rect_length*np.sin(angle_to_p_pad_centre) +  rect_width/2*np.cos(angle_to_p_pad_centre)
+            y2 = y - rect_length*np.cos(angle_to_p_pad_centre) +  rect_width/2*np.sin(angle_to_p_pad_centre)
+
+            x1 = x + rect_length*np.sin(angle_to_p_pad_centre) -  rect_width/2*np.cos(angle_to_p_pad_centre)
+            y1 = y - rect_length*np.cos(angle_to_p_pad_centre) -  rect_width/2*np.sin(angle_to_p_pad_centre)
             
             
+            x3 = x+separation/2 + width_contact/2*np.sin(np.pi/4)
+            y3 = y-y_offset + width_contact/2*np.cos(np.pi/4)
             
-            chip_mask.create_circle('contact_pads', x-separation/2, y-y_offset, width_contact/2)
+            x4 = x+separation/2 - width_contact/2
+            y4 = y-y_offset
             
+            #polygon_1 = create_polygon('contact_pads',x1, y1, x2, y2, x3, y3, x4, y4,layer_data)
+            connecting_polygon_p = create_polygon('contact_pads', x1, y1, x2, y2, x3, y3, x4, y4, layer_data)
+            rect_polygon = gdstk.boolean(rect_without_circle_smooth, connecting_polygon_p, 'or', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
+            p_contact_circle = create_circle('contact_pads', x+separation/2, y-y_offset, width_contact/2, layer_data, tolerance=0.005)
+                        
+            p_contact_whole = gdstk.boolean(p_contact_circle, rect_polygon, 'or', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
+            chip_mask.add_polygon_list('contact_pads', p_contact_whole)
+            
+            
+            #n-contact
+            #Half annulus
+            n_pad_r_outer = separation/2 + width_contact/2
+            n_pad_r_inner = (n_contact_inner_r_array[i] + n_contact_outer_r_array[i])/2
+            
+            n_pad_ang_start = angle_start_array[i]
+            n_pad_ang_stop = angle_stop_array[i]
+            
+            #n_pad_half_circ = create_half_annulus('contact_pads', x, y, n_pad_r_inner, n_pad_r_outer, n_pad_ang_start, n_pad_ang_stop, layer_data=layer_data, tolerance = 0.005)
+            n_pad_half_ann = create_half_annulus('contact_pads', x, y, n_pad_r_inner, n_pad_r_outer, n_pad_ang_start, n_pad_ang_stop, layer_data=layer_data, tolerance = 0.005)
+            
+            #The rounded edge of half annulus
+            x_round_edge = x + np.cos(n_pad_ang_start)*(n_pad_r_outer+n_pad_r_inner)/2
+            y_round_edge = y + np.sin(n_pad_ang_start)*(n_pad_r_outer+n_pad_r_inner)/2
+            round_edge = create_circle('contact_pads', x_round_edge, y_round_edge, (n_pad_r_outer-n_pad_r_inner)/2, layer_data, tolerance=0.005)
+            
+            n_pad = gdstk.boolean(n_pad_half_ann, round_edge, 'or', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
+
+            
+            # The polygon connecting the half annulus and round contact pad
+            x1 = x - n_pad_r_outer
+            y1 = y
+            
+            x2 = x - n_pad_r_inner * np.cos(n_pad_ang_stop-np.pi)
+            y2 = y - n_pad_r_inner * np.sin(n_pad_ang_stop-np.pi)
+            
+            x3 = x - separation/2 + np.cos(np.pi/6)*width_contact/2
+            y3 = y - y_offset + np.sin(np.pi/6)*width_contact/2
+            
+            x4 = x - separation/2 - width_contact/2
+            y4 = y - y_offset
+            
+            connecting_polygon_n = create_polygon('contact_pads', x1,y1,x2,y2,x3,y3,x4,y4, layer_data)
+            
+            n_pad_annulus = gdstk.boolean(n_pad, connecting_polygon_n, 'or', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
+            n_pad_circle = create_circle('contact_pads', x-separation/2, y-y_offset, width_contact/2, layer_data, tolerance=0.005)
+            
+            n_pad_whole =  gdstk.boolean(n_pad_annulus,n_pad_circle, 'or', layer=layer_data['contact_pads']['layer_number'],datatype=layer_data['contact_pads']['datatype'])
+            
+            chip_mask.add_polygon_list('contact_pads', n_pad_whole)
+            
+            # Create text indices
+            chip_mask.create_label('contact_pads', x-130, y+ 50, 50, x_label_no[j])
+            chip_mask.create_label('contact_pads', x+80, y+ 50, 50, y_label_no[i])
             
     # Layer 11: bondpads
     
@@ -497,6 +663,7 @@ def main():
     #y = 500
     #size = 500
     #chip_mask.create_label('contact_pads', x, y, size, 'Hans')
+    
     
     
     

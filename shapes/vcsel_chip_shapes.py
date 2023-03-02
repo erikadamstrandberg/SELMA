@@ -1,7 +1,7 @@
 #%%
 
 import gdstk
-from generic_shapes import create_rectangle, create_annulus, create_polygon
+from generic_shapes import create_rectangle, create_annulus
 import numpy as np
 
 
@@ -522,9 +522,12 @@ def create_TLM_circles(ring_layer, x, y, layer_data, circle_tolerance):
     
     cover_size_x = TLM_circles_x_size + cover_margin_x
     cover_size_y = TLM_circles_y_size + cover_margin_y
-    create_rectangle('mesa', x, y, cover_size_x, cover_size_y, layer_data)
     
-    create_rectangle('open_contacts', x, y, cover_size_x, cover_size_y, layer_data)
+    if ring_layer == 'p_ring':
+        TLM_circle_layers.append(create_rectangle('mesa', x, y, cover_size_x, cover_size_y, layer_data))
+        TLM_circle_layers.append(create_rectangle('open_contacts', x, y, cover_size_x, cover_size_y, layer_data))
+    elif ring_layer == 'n_ring':
+        TLM_circle_layers.append(create_rectangle('open_contacts', x, y, cover_size_x, cover_size_y, layer_data))
     
     contact_margin = 10
     TLM_contact_x_size = TLM_circles_x_size - contact_margin
@@ -586,9 +589,14 @@ def create_TLM_pads(pad_layer, x, y, layer_data):
     
     cover_size_x = -x_fifth_offset + pad_width + cover_margin_x
     cover_size_y = pad_height + cover_margin_y
-    TLM_pads.append(create_rectangle('mesa', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
     
-    TLM_pads.append(create_rectangle('open_contacts', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
+    if pad_layer == 'p_ring':
+        TLM_pads.append(create_rectangle('mesa', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
+        TLM_pads.append(create_rectangle('open_contacts', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
+    elif pad_layer == 'n_ring':
+        TLM_pads.append(create_rectangle('open_contacts', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
+    
+    #TLM_pads.append(create_rectangle('open_contacts', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
     
     
     contact_margin = 10
@@ -626,8 +634,17 @@ def create_all_labels(x, y, label_distance_y, layer_data):
         if text != 'NO_LABEL':
             y_pos = y - i*label_distance_y
             label_polygons.append(create_mask_label(key, x, y_pos, text, layer_data))
-    
+            
     return label_polygons
 
+def create_all_labels_overlap(x, y, layer_data):
+    label_polygons = []
+    
+    for i, key in enumerate(layer_data.keys()):
+        text = layer_data[key]['label']
+        if text != 'NO_LABEL':
+            label_polygons.append(create_label(key, x, y, 600, text, layer_data))
+            
+    return label_polygons
 
 
