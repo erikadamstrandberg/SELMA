@@ -33,20 +33,83 @@ def create_circle(key, x, y, radius, layer_data, tolerance):
                         )
 
 def create_mask_label(x, y, text, layer_data):
-    height = 40
+    height = 80
     
     return gdstk.text(text, height,
                        (x, y),
                        layer=layer_data['layer'],
                        datatype=layer_data['datatype'])
 
+def create_annulus(key, x, y,
+                   inner, outer,
+                   layer_data, 
+                   tolerance):
+    
+    polygon = gdstk.ellipse(np.array([x, y]), 
+                         outer, 
+                         inner_radius=inner, 
+                         initial_angle=0,
+                         final_angle=2*np.pi,
+                         layer=layer_data[key]['layer'],
+                         datatype=layer_data[key]['datatype'],
+                         tolerance=tolerance
+                         )
+    
+    return polygon
+
+def add_grating(grating_x, grating_y, grating_radius, grating_period, grating_duty_cycle, theta, full_mask, layer_data, circle_tolerance):
+    grating_diameter = 2*grating_radius
+    grating_width = grating_period*grating_duty_cycle
+    
+    grating_polygons = []
+    number_of_lines_one_way = int(grating_diameter//grating_period)//2 + 1
+    
+    for i in range(number_of_lines_one_way):
+        grating_line_width = np.sqrt(grating_diameter**2 - 4*(i*grating_period + grating_width/2)**2)
+        grating_line = create_rectangle('pol_grating', grating_x, grating_y + i*grating_period, grating_line_width, grating_width, layer_data)
+        grating_polygons.append(grating_line)
+        
+    for i in range(1, number_of_lines_one_way):
+        grating_line_width = np.sqrt(grating_diameter**2 - 4*(i*grating_period + grating_width/2)**2)
+        grating_line = create_rectangle('pol_grating', grating_x, grating_y - i*grating_period, grating_line_width, grating_width, layer_data)
+        grating_polygons.append(grating_line)
+        
+    for polygon in grating_polygons:
+        full_mask['pol_grating'].add(polygon.rotate(theta, center=(grating_x, grating_y)))
+        
+def add_grating_and_mode_filter(grating_x, grating_y, grating_radius, grating_period, grating_duty_cycle, theta, full_mask, layer_data, circle_tolerance):
+    grating_diameter = 2*grating_radius
+    grating_width = grating_period*grating_duty_cycle
+    
+    # grating_polygons = []
+    number_of_lines_one_way = int(grating_diameter//grating_period)//2 + 1
+    
+    grating_and_mode_filter = create_annulus('pol_grating', grating_x, grating_y, grating_radius/2, grating_radius, layer_data, circle_tolerance)
+    
+    for i in range(number_of_lines_one_way):
+        grating_line_width = np.sqrt(grating_diameter**2 - 4*(i*grating_period + grating_width/2)**2)
+        grating_line = create_rectangle('pol_grating', grating_x, grating_y + i*grating_period, grating_line_width, grating_width, layer_data)
+        
+        grating_and_mode_filter = gdstk.boolean(grating_and_mode_filter, grating_line, 'or', layer=layer_data['pol_grating']['layer'],datatype=layer_data['pol_grating']['datatype'])
+        
+
+    for i in range(1, number_of_lines_one_way):
+        grating_line_width = np.sqrt(grating_diameter**2 - 4*(i*grating_period + grating_width/2)**2)
+        grating_line = create_rectangle('pol_grating', grating_x, grating_y - i*grating_period, grating_line_width, grating_width, layer_data)
+        grating_and_mode_filter = gdstk.boolean(grating_and_mode_filter, grating_line, 'or', layer=layer_data['pol_grating']['layer'],datatype=layer_data['pol_grating']['datatype'])
+        
+        
+    for polygon in grating_and_mode_filter:
+        full_mask['pol_grating'].add(polygon.rotate(theta, center=(grating_x, grating_y)))
+        
+
 def main():
     ## SETUP VARIABLES ##
     
-    mask_name   = 'POL_GRAT_CALIBRATION_v1'
+    mask_name   = 'POL_MODE_CALIBRATION_v1'
     
     # Name of cell
-    cell_name   = 'POL_GRAT_CALIBRATION_v1'
+    cell_name   = 'POL_MODE_CALIBRATION_v1'
     
     save_layout = True
     
@@ -86,90 +149,97 @@ def main():
         
     chip_size_x = 8000
     chip_size_y = 10000
-    full_mask['chip'].add(create_rectangle('chip', 0, 0, chip_size_x, chip_size_y, layer_data))
+    # full_mask['chip'].add(create_rectangle('chip', 0, 0, chip_size_x, chip_size_y, layer_data))
+    
+    grating_x_offset = 0
+    grating_y_offset = 0
+    
+    grating_radius = 4
 
+    grating_period = 0.26
+    grating_duty_cycle = 0.5
+    
+    theta = 0
+    
+    distance_between_gratings_x = grating_radius*6
+    distance_between_gratings_y = grating_radius*6
+    number_of_gratings_x = 40
+    # number_of_gratings_x = 1
+    number_of_gratings_y = int(distance_between_gratings_x/grating_radius)*4
+    
+    for i in range(number_of_gratings_x):
+        for j in range(number_of_gratings_y):
+            grating_x = i*distance_between_gratings_x + j*grating_radius + grating_x_offset
+            grating_y = j*distance_between_gratings_y + grating_y_offset
+            
+            add_grating_and_mode_filter(grating_x, grating_y, grating_radius, grating_period, grating_duty_cycle, theta, full_mask, layer_data, circle_tolerance)
+        
+    labels_x = grating_x_offset - 400
+    labels_y = grating_y_offset + 250
+    
+    label_polygon = create_mask_label(labels_x, labels_y, str(round(grating_duty_cycle, 2)), layer_data['labels'])
+    
+    for polygon in label_polygon:
+        full_mask['labels'].add(polygon)
+        
+    # grating_x_offset = 1600
+    # grating_y_offset = 0
+    
+    # grating_radius = 4
 
-    # LI_grating_x = 600
-    LI_grating_x = -2700
-    LI_grating_y = 3300
-    LI_grating_width = 500
-    LI_grating_height = 500
+    # grating_period = 0.26
+    # grating_duty_cycle = 0.55
     
-    full_mask['labels'].add(create_rectangle('labels', LI_grating_x, LI_grating_y, LI_grating_width, LI_grating_height, layer_data))
+    # distance_between_gratings_x = grating_radius*6
+    # distance_between_gratings_y = grating_radius*6
+    # number_of_gratings_x = 40
+    # number_of_gratings_y = int(distance_between_gratings_x/grating_radius)*4
+
+    
+    # for i in range(number_of_gratings_x):
+    #     for j in range(number_of_gratings_y):
+    #         grating_x = i*distance_between_gratings_x + j*grating_radius + grating_x_offset
+    #         grating_y = j*distance_between_gratings_y + grating_y_offset
+            
+    #         add_grating_and_mode_filter(grating_x, grating_y, grating_radius, grating_period, grating_duty_cycle, theta, full_mask, layer_data, circle_tolerance)
         
+    # labels_x = grating_x_offset - 400
+    # labels_y = grating_y_offset + 250
     
-    trenches_x = -2700
-    trenches_y = 2850
-    trenches_duty_cycle = np.arange(0.5, 0.65, 0.05)
-    trenches_period = 0.26
+    # label_polygon = create_mask_label(labels_x, labels_y, str(round(grating_duty_cycle, 2)), layer_data['labels'])
     
-    trenches_length = 500
-    trenches_number = 600
-    
-    trenches_distance_between_duty_cycle = 400
-    
-    for i in range(trenches_number):
-        for j in range(len(trenches_duty_cycle)):
-            full_mask['pol_grating'].add(create_rectangle('pol_grating', trenches_x, trenches_y - i*trenches_period - j*trenches_distance_between_duty_cycle, trenches_length, trenches_period*trenches_duty_cycle[j], layer_data))
-            
-    labels_x = trenches_x - 500
-    labels_y = trenches_y - 100
-    
-    for j in range(len(trenches_duty_cycle)):
-        label_polygon = create_mask_label(labels_x, labels_y - j*trenches_distance_between_duty_cycle, str(round(trenches_duty_cycle[j], 2)), layer_data['labels'])
+    # for polygon in label_polygon:
+    #     full_mask['labels'].add(polygon)
         
-        for polygon in label_polygon:
-            full_mask['labels'].add(polygon)
+    # grating_x_offset = 3200
+    # grating_y_offset = 0
+    
+    # grating_radius = 4
+
+    # grating_period = 0.26
+    # grating_duty_cycle = 0.6
+    
+    # distance_between_gratings_x = grating_radius*6
+    # distance_between_gratings_y = grating_radius*6
+    # number_of_gratings_x = 40
+    # number_of_gratings_y = int(distance_between_gratings_x/grating_radius)*4
+    
+    # for i in range(number_of_gratings_x):
+    #     for j in range(number_of_gratings_y):
+    #         grating_x = i*distance_between_gratings_x + j*grating_radius + grating_x_offset
+    #         grating_y = j*distance_between_gratings_y + grating_y_offset
             
+    #         add_grating_and_mode_filter(grating_x, grating_y, grating_radius, grating_period, grating_duty_cycle, theta, full_mask, layer_data, circle_tolerance)
         
-    grating_radius = np.arange(1, 5.5, 0.5)
-    distance_between_radius = 50
-    grating_distance_between_duty_cycles = 100
+    # labels_x = grating_x_offset - 400
+    # labels_y = grating_y_offset + 250
     
+    # label_polygon = create_mask_label(labels_x, labels_y, str(round(grating_duty_cycle, 2)), layer_data['labels'])
     
-    for k in range(len(trenches_duty_cycle)):
-        for i in range(len(grating_radius)):
-            grating_x = trenches_x - 200 + distance_between_radius*i
-            grating_y = trenches_y - 100 - k*grating_distance_between_duty_cycles - trenches_distance_between_duty_cycle*len(trenches_duty_cycle) - trenches_period*trenches_number
-            
-            grating_width = trenches_period*trenches_duty_cycle[k]
-            grating_outline = create_circle('pol_grating', grating_x, grating_y, grating_radius[i], layer_data, circle_tolerance)
-            
-            grating_polygons = []
-            grating_polygons.append(grating_outline)
-            
-            number_of_iterations = 300
-            for j in range(number_of_iterations):
-                grating_line = create_rectangle('pol_grating', grating_x, grating_y + j*trenches_period, grating_radius[i]*2, grating_width, layer_data)
-                grating_polygons = gdstk.boolean(grating_polygons, grating_line, 'not',
-                                        layer=layer_data['pol_grating']['layer'],
-                                        datatype=layer_data['pol_grating']['datatype'])
-                
-                if i*trenches_period > grating_radius[i]:
-                    break
-                
-            for j in range(number_of_iterations):
-                grating_line = create_rectangle('pol_grating', grating_x, grating_y - j*trenches_period, grating_radius[i]*2, grating_width, layer_data)
-                grating_polygons = gdstk.boolean(grating_polygons, grating_line, 'not',
-                                        layer=layer_data['pol_grating']['layer'],
-                                        datatype=layer_data['pol_grating']['datatype'])
-                
-                if i*trenches_period > grating_radius[i]:
-                    break
-                
-            for polygon in grating_polygons:
-                full_mask['pol_grating'].add(polygon)
-                
-    labels_x = trenches_x - 400
-    labels_y = trenches_y - 100 - trenches_distance_between_duty_cycle*len(trenches_duty_cycle) - trenches_period*trenches_number
+    # for polygon in label_polygon:
+    #     full_mask['labels'].add(polygon)
     
-    
-    for j in range(len(trenches_duty_cycle)):
-        label_polygon = create_mask_label(labels_x, labels_y - j*grating_distance_between_duty_cycles, str(round(trenches_duty_cycle[j], 2)), layer_data['labels'])
         
-        for polygon in label_polygon:
-            full_mask['labels'].add(polygon)
-            
     
     ## ADD ALL CREATED CELLS TO MAIN LAYER
     for layer in full_mask.keys():
@@ -188,6 +258,8 @@ def main():
         gds_file_name = mask_name + '.gds'
         save_mask_path = Path.joinpath(mask_folder_path, gds_file_name)
         lib.write_gds(str(save_mask_path))
+        
+        
         
 if  __name__ == '__main__':
     main()

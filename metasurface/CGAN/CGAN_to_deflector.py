@@ -26,9 +26,9 @@ lam0 = 976e-9
 theta_t = 1
 derivative_phase_gradient = 2*np.pi*np.sin(theta_t*np.pi/180)/lam0
 
-dx = 270e-9
-# x_grid = np.arange(0, 300e-6, dx)
-x_grid = np.arange(0, 60*dx, dx*5)
+dx = 260.4e-9
+# x_grid = np.arange(0, 100e-6, dx)
+x_grid = np.arange(0, 10*dx, dx)
 y_grid = x_grid
 phase_gradient = x_grid*derivative_phase_gradient % 2*np.pi
 
@@ -38,8 +38,10 @@ for i in range(len(x_grid)):
     for j in range(len(y_grid)):
         phase_gradient_map[i, j] = phase_gradient[i]
 
-plt.figure(1)
-plt.imshow(phase_gradient_map)
+
+plt.plot(x_grid, phase_gradient)
+# plt.figure(1)
+# plt.imshow(phase_gradient_map)
 
 #%%
 
@@ -55,7 +57,8 @@ for i in grid_list:
 phase_list = np.array(phase_list)
 
 # Name of cell
-cell_name = 'CGAN_deflector_v3_300um'
+# cell_name = 'CGAN_deflector_v3_300um'
+cell_name = 'CGAN_deflector_for_niclas'
 mask_name = cell_name
 save_layout = True
 
@@ -77,7 +80,7 @@ gdstk.Library()
 # Main cell of mask
 mask = lib.new_cell(cell_name)
 
-dx = 298.2
+dx = 210 + 2*25.2
 dy = dx
 
 for ii in range(len(x_grid)):

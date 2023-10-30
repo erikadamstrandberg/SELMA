@@ -42,9 +42,13 @@ def split_order_position(order_position_str):
     if order_position_str == 'none':
         order_position = 'none'
     else:
-        list_of_positions = order_position_str.split('.')
-        order_position = [int(e) for e in list_of_positions]
-        order_position = np.array(order_position)
-        
+        try:
+            list_of_positions = order_position_str.split('.')
+            order_position = [int(e) for e in list_of_positions]
+            order_position = np.array(order_position)
+        except ValueError:
+            single_order_position_str = order_position_str.replace('.', '')
+            order_position = int(single_order_position_str)
+            
     return order_position
     

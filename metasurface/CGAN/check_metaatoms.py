@@ -56,11 +56,9 @@ gdstk.Library()
 # Main cell of mask
 mask = lib.new_cell(cell_name)
 
-
-
 x_pos = 0
 y_pos = 0
-current_phase = 3.1
+current_phase = 6
 
 closest_phase_index = np.argmin(np.abs(current_phase - phase_list))
 
@@ -78,19 +76,24 @@ y_size = pixel_size
 polygons_in_grid = []
 
 first = True
+# for i in range(len(x)):
+#     for j in range(len(y)):
+#         if grid[i][j] == 1:
+#             if first:
+#                 CGAN_filled = create_rectangle(
+#                     x[i] + x_pos, y[j] + y_pos, x_size, y_size, 1)
+#                 first = False
+#             else:
+#                   CGAN_filled = gdstk.boolean(CGAN_filled, create_rectangle(
+#                       x[i] + x_pos, y[j] + y_pos, x_size, y_size, 1), 'or')
+                  
 for i in range(len(x)):
     for j in range(len(y)):
         if grid[i][j] == 1:
-            if first:
-                CGAN_filled = create_rectangle(
-                    x[i] + x_pos, y[j] + y_pos, x_size, y_size, 1)
-                first = False
-            else:
-                  CGAN_filled = gdstk.boolean(CGAN_filled, create_rectangle(
-                      x[i] + x_pos, y[j] + y_pos, x_size, y_size, 1), 'or')
+            mask.add(create_rectangle(-x[i] + x_pos, y[j] + y_pos, x_size, y_size, 1))
 
 precision = 0.0001
-mask.add(CGAN_filled[0])
+# mask.add(CGAN_filled[0])
     
         
 

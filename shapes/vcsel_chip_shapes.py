@@ -186,6 +186,52 @@ def create_DC_a_mark(key,
                             layer=layer_data[key]['layer_number'], datatype=layer_data[key]['datatype'])
 
     return covered_a_mark
+
+
+def create_combo_mark(key,
+                      x, y,
+                      MS_center_rect, MS_arm_offset,
+                      MS_arm_width, MS_arm_height,
+                      number,
+                      layer_data):
+
+    MS_center_mark = create_rectangle(key, x, y,
+                                      MS_center_rect, MS_center_rect,
+                                      layer_data)
+    
+    MS_left_arm   = create_rectangle(key, x - MS_arm_offset, y,
+                                     MS_arm_width, MS_arm_height,
+                                     layer_data)
+    
+    MS_right_arm = create_rectangle(key, x + MS_arm_offset, y,
+                                    MS_arm_width, MS_arm_height,
+                                    layer_data)
+    
+
+    MS_upper_arm = create_rectangle(key, x, y + MS_arm_offset,
+                                    MS_arm_height, MS_arm_width,
+                                    layer_data)
+    
+    
+    MS_lower_arm = create_rectangle(key, x, y - MS_arm_offset,
+                                    MS_arm_height, MS_arm_width,
+                                    layer_data)
+    
+    return [MS_center_mark, MS_left_arm, MS_right_arm, MS_upper_arm, MS_lower_arm]
+
+def create_EBL_combo_mark(key, x, y, layer_data):
+    MS_center_rect = 20
+    MS_arm_offset  = 280
+    
+    MS_arm_width   = 320
+    MS_arm_height  = 10
+    
+    return create_combo_mark(key,
+                          x, y,
+                          MS_center_rect, MS_arm_offset,
+                          MS_arm_width, MS_arm_height,
+                          1,
+                          layer_data)
     
     
        
@@ -452,6 +498,12 @@ def create_a_marks_all_layers(chip_size_x, chip_size_y,
                     alignment_polygons[3].append(cover_chip_DC(key, chip_size_x, chip_size_y,
                                                                 frame_size_x, frame_size_y,
                                                                 layer_data))
+                if layer_data[key]['data_parity'] == 'DD_no_cover':
+                    alignment_polygons[0].append(create_a_marks_DD_all_corners(key, 
+                                                                               frame_size_x, frame_size_y, 
+                                                                               colums_of_alignment_marks, 
+                                                                               aligment_mark_offset,
+                                                                               layer_data))
                     
                     
                     
@@ -522,9 +574,13 @@ def create_TLM_circles(ring_layer, x, y, layer_data, circle_tolerance):
     
     cover_size_x = TLM_circles_x_size + cover_margin_x
     cover_size_y = TLM_circles_y_size + cover_margin_y
-    create_rectangle('mesa', x, y, cover_size_x, cover_size_y, layer_data)
+    mesa_rectangle = create_rectangle('mesa', x, y, cover_size_x, cover_size_y, layer_data)
     
-    create_rectangle('open_contacts', x, y, cover_size_x, cover_size_y, layer_data)
+    if ring_layer == 'p_ring':
+        TLM_circle_layers.append(mesa_rectangle)
+    
+    open_contacts_rectangle = create_rectangle('open_contacts', x, y, cover_size_x, cover_size_y, layer_data)
+    TLM_circle_layers.append(open_contacts_rectangle)
     
     contact_margin = 10
     TLM_contact_x_size = TLM_circles_x_size - contact_margin
@@ -553,9 +609,9 @@ def create_TLM_circles(ring_layer, x, y, layer_data, circle_tolerance):
                                     datatype=layer_data['contact_pads']['datatype'])
     
     
-    for polygons in TLM_circles:
+    for polygons in TLM_contact:
         TLM_circle_layers.append(polygons)
-        
+
         
     return TLM_circle_layers
         
@@ -586,7 +642,9 @@ def create_TLM_pads(pad_layer, x, y, layer_data):
     
     cover_size_x = -x_fifth_offset + pad_width + cover_margin_x
     cover_size_y = pad_height + cover_margin_y
-    TLM_pads.append(create_rectangle('mesa', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
+    
+    if pad_layer == 'p_ring':
+        TLM_pads.append(create_rectangle('mesa', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
     
     TLM_pads.append(create_rectangle('open_contacts', x + x_fifth_offset/2, y, cover_size_x, cover_size_y, layer_data))
     

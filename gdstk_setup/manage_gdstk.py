@@ -167,8 +167,154 @@ def setup_gds_lib(mask_name, cell_name, layer_data):
 def save_ordering_mask(chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns):
     save_ordering_mask_parity('DD', chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns)
     save_ordering_mask_parity('DC', chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns)
+    
+    
+def save_single_layer(single_layer_key, chip_mask, mask_name, cell_name, mask_folder, layer_data):
 
+    chip_mask_single_layer = setup_gds_lib(mask_name, cell_name, layer_data)
+    
+    for key in layer_data:
+        if key == single_layer_key:
+            for polygon_and_cells in chip_mask.mask_dict[key]:
+                    if isinstance(polygon_and_cells, gdstk.Polygon):
+                        polygon_and_cells_copy = polygon_and_cells.copy()
+                        chip_mask_single_layer.add_polygon(list(chip_mask.layer_data.keys())[0], polygon_and_cells_copy)
 
+                        
+    save_gds_file(chip_mask_single_layer, cell_name, mask_folder, True)
+    
+def save_single_layer_matrix(matrix_dict, single_layer_key, chip_mask, mask_name, cell_name, mask_folder, layer_data, tolerance):
+
+    chip_mask_single_layer = setup_gds_lib(mask_name, cell_name, layer_data)
+    
+    rows = matrix_dict.get('rows')
+    translation_x = matrix_dict.get('translation_x')
+    translation_y = matrix_dict.get('translation_y')
+    
+    for key in layer_data:
+        if key == single_layer_key:
+            for polygon_and_cells in chip_mask.mask_dict[key]:
+                    if isinstance(polygon_and_cells, gdstk.Polygon):
+                        
+                        for i in range(len(rows)):
+                            for j in range(-rows[i], rows[i] + 1):
+                                polygon_and_cells_copy = polygon_and_cells.copy().translate(j*translation_x, 3*translation_y - i*translation_y)
+                                
+                                chip_mask_single_layer.add_polygon(list(chip_mask.layer_data.keys())[0], polygon_and_cells_copy)
+                        
+                        
+
+    
+    wafer_size_inches = matrix_dict.get('wafer_size_inches')
+    one_inch = 2.54e-2
+    one_inch_um = one_inch*1e6
+    
+    # chip_mask_single_layer.create_circle('DD_frame', 0, 0, wafer_size_inches*one_inch_um)    
+    save_gds_file(chip_mask_single_layer, cell_name, mask_folder, True)
+    
+def save_single_layer_inverted(single_layer_key, chip_mask, mask_name, cell_name, mask_folder, layer_data, chip_size_x, chip_size_y):
+
+    chip_mask_single_layer = setup_gds_lib(mask_name, cell_name, layer_data)
+    
+    inverted_mask = create_rectangle(single_layer_key, 0, 0, chip_size_x, chip_size_y, layer_data)
+    
+    for key in layer_data:
+        if key == single_layer_key:
+            for polygon_and_cells in chip_mask.mask_dict[key]:
+                    if isinstance(polygon_and_cells, gdstk.Polygon):
+                        polygon_and_cells_copy = polygon_and_cells.copy()
+                        inverted_mask = gdstk.boolean(inverted_mask, polygon_and_cells_copy, 'not')
+                        
+                        # chip_mask_single_layer.add_polygon(list(chip_mask.layer_data.keys())[0], polygon_and_cells_copy)
+
+    chip_mask_single_layer.add_polygon_list(single_layer_key, inverted_mask)
+
+    
+    save_gds_file(chip_mask_single_layer, cell_name, mask_folder, True)
+    
+def save_single_layer_matrix_inverted(matrix_dict, alignment_marks_for_backside, single_layer_key, chip_mask, mask_name, cell_name, mask_folder, layer_data, chip_size_x, chip_size_y, tolerance):
+
+    chip_mask_single_layer = setup_gds_lib(mask_name, cell_name, layer_data)
+    
+    wafer_size_inches = matrix_dict.get('wafer_size_inches')
+    one_inch = 2.54e-2
+    one_inch_um = one_inch*1e6
+    
+    # chip_mask_single_layer.create_circle('mesa', 0, 0, one_inch_um*wafer_size_inches)
+    
+    inverted_mask = create_rectangle(single_layer_key, 0, 0, chip_size_x, chip_size_y, layer_data)
+    
+    rows = matrix_dict.get('rows')
+    translation_x = matrix_dict.get('translation_x')
+    translation_y = matrix_dict.get('translation_y')
+    
+    for key in layer_data:
+        if key == single_layer_key:
+            for polygon_and_cells in chip_mask.mask_dict[key]:
+                    if isinstance(polygon_and_cells, gdstk.Polygon):
+                        polygon_and_cells_copy = polygon_and_cells.copy()
+                        inverted_mask = gdstk.boolean(inverted_mask, polygon_and_cells_copy, 'not')
+                        
+    
+    all_copys_of_polygons = []
+    for i in range(len(rows)):
+        for j in range(-rows[i], rows[i] + 1):
+            for mask_polygon in inverted_mask:
+                
+                if (i == 3 and (j == -4 or j == 4)) or (j == 0 and (i == 0 or i == 6)):
+                    mask_copy = mask_polygon.copy()
+                
+                    if j < 0 and not alignment_marks_for_backside['left_side'] == []:
+                        for alignment_cutout in alignment_marks_for_backside['left_side']:
+                            mask_copy = gdstk.boolean(mask_copy, alignment_cutout, 'not')
+
+                        number_list = alignment_marks_for_backside['numbering'][j]
+                        for number in number_list:
+                            mask_copy = gdstk.boolean(mask_copy, number, 'not')
+
+                        
+                    elif j > 0 and not alignment_marks_for_backside['right_side'] == []:
+                        for alignment_cutout in alignment_marks_for_backside['right_side']:
+                            mask_copy = gdstk.boolean(mask_copy, alignment_cutout, 'not')
+                            
+                        number_list = alignment_marks_for_backside['numbering'][j]
+                        for number in number_list:
+                            mask_copy = gdstk.boolean(mask_copy, number, 'not')
+                            
+                    elif j == 0 and i == 0:
+                        for alignment_cutout in alignment_marks_for_backside['upper_side']:
+                            mask_copy = gdstk.boolean(mask_copy, alignment_cutout, 'not')
+
+                        number_list = alignment_marks_for_backside['numbering'][i]
+                        for number in number_list:
+                            mask_copy = gdstk.boolean(mask_copy, number, 'not')
+                            
+                    elif j == 0 and i == 6:
+                        for alignment_cutout in alignment_marks_for_backside['lower_side']:
+                            mask_copy = gdstk.boolean(mask_copy, alignment_cutout, 'not')
+
+                        number_list = alignment_marks_for_backside['numbering'][i]
+                        for number in number_list:
+                            mask_copy = gdstk.boolean(mask_copy, number, 'not')
+                        
+                            
+                    else:
+                        mask_copy = [mask_copy]
+                    
+                    for cut_copy in mask_copy:
+                        all_copys_of_polygons.append(cut_copy.translate(j*translation_x, 3*translation_y - i*translation_y))
+                        
+                else:
+                    all_copys_of_polygons.append(mask_polygon.copy().translate(j*translation_x, 3*translation_y - i*translation_y))
+                    
+                
+      
+    for copy in all_copys_of_polygons:
+        chip_mask_single_layer.add_polygon(list(chip_mask.layer_data.keys())[0], copy)
+
+    save_gds_file(chip_mask_single_layer, cell_name, mask_folder, True)
+    
+    
 def save_ordering_mask_parity(parity, chip_mask, mask_name, cell_name, mask_folder, layer_data, mask_spacing_x, mask_spacing_y, number_of_mask_columns):
     # Mask names
     mask_name_DD   = mask_name + '_' + parity
@@ -182,6 +328,9 @@ def save_ordering_mask_parity(parity, chip_mask, mask_name, cell_name, mask_fold
         order_position = layer_data[key]['order_position']
         data_parity = layer_data[key]['data_parity']
         
+        if layer_data[key]['data_parity'] == 'DD_no_cover':
+            data_parity = 'DD'
+        
         if data_parity == parity:
             if isinstance(order_position, np.ndarray):
                 for position in order_position:
@@ -193,8 +342,20 @@ def save_ordering_mask_parity(parity, chip_mask, mask_name, cell_name, mask_fold
                             polygon_and_cells_copy = polygon_and_cells.copy()
                             polygon_and_cells_copy.translate(order_x, order_y)
                             chip_mask_DD.add_polygon(list(chip_mask.layer_data.keys())[0], polygon_and_cells_copy)
-    save_layout = True
-    save_gds_file(chip_mask_DD, mask_name_DD, mask_folder, save_layout)
+                            
+                            
+            elif isinstance(order_position, int):
+                order_x = ((order_position - 1)%number_of_mask_columns)*mask_spacing_x
+                order_y = ((order_position - 1)//number_of_mask_columns)*mask_spacing_y
+    
+                for polygon_and_cells in chip_mask.mask_dict[key]:
+                    if isinstance(polygon_and_cells, gdstk.Polygon):
+                        polygon_and_cells_copy = polygon_and_cells.copy()
+                        polygon_and_cells_copy.translate(order_x, order_y)
+                        chip_mask_DD.add_polygon(list(chip_mask.layer_data.keys())[0], polygon_and_cells_copy)
+                        
+                        
+    save_gds_file(chip_mask_DD, mask_name_DD, mask_folder, True)
     
 
 def save_gds_file(chip_mask, mask_name, mask_folder, save_layout):
