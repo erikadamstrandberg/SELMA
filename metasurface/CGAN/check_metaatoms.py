@@ -94,7 +94,7 @@ mask.add(CGAN_filled[0])
     
         
 
-save_path = Path(mask_folder, mask_name)
-lib.write_gds(str(save_path) + '.gds')
+# save_path = Path(mask_folder, mask_name)
+# lib.write_gds(str(save_path) + '.gds')
     
 
